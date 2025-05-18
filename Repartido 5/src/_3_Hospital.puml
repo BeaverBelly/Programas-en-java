@@ -1,0 +1,52 @@
+@startuml
+
+Class Persona{
+    -cedula : String
+    -nombre : String
+    -telefono : String
+    -correo : String
+}
+
+class Paciente extends Persona{
+
+}
+
+class Medico extends Persona{
+    -especialidad : String
+    -horarioDisponible : String
+
+    +agendarTurno(paciente : Paciente, fecha : Date) : Turno
+    +cancelarTurno(turno : Turno) : void
+}
+
+class Cirujano extends Medico{
+    -quirófanoAsignado : String
+    -cantidadCirugias : int
+}
+
+class Clinico extends Medico{
+    -consultorioAsignado : String
+    -pacientesFrecuentes : List<Paciente>
+}
+
+class Turno{
+    -fecha : Date
+    -hora : String
+    -duracion : int
+}
+
+class Area{
+    -nombre : String
+}
+
+class Historial{
+    -observaciones : String
+}
+
+Paciente "1" -- "1" Historial
+Paciente "1" -- "*" Turno
+Turno "1" -- "1" Medico
+Medico "*" -- "1" Area
+Medico "*" -- "*" Paciente
+
+@enduml

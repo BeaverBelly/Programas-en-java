@@ -1,0 +1,55 @@
+@startuml
+
+class Usuario{
+    -nombre : String
+    -correo : String
+
+    +seguirUsuario() : void
+}
+
+class Estudiante extends Usuario{
+    -carrera : String
+    -añoIngreso : int
+    -generación : String
+}
+
+class Docente extends Usuario{
+    -departamento : String
+    -cargo : String
+    -horasSemanales : int
+}
+
+class Egresado extends Usuario{
+    -tituloObtenido : String
+    -añoEgreso : int
+    -ocupacionActual : String
+}
+
+class Publicacion{
+    -contenido : String
+    -fecha : Date
+
+    +publicar() : void
+}
+
+class Comentario{
+    -texto : String
+    -fecha : Date
+
+    +comentar() : void
+}
+
+class Grupo{
+    -nombre : String
+    -tema : String
+
+    +unirseAGrupo() : void
+}
+
+Usuario "1" -- "*" Publicacion
+Usuario "1" -- "*" Comentario
+Publicacion "1" -- "*" Comentario
+Usuario "*" -- "*" Grupo
+Usuario "*" -- "*" Usuario
+
+@enduml

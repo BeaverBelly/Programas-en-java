@@ -1,0 +1,26 @@
+@startuml
+
+class Cliente{
+    -cedula : String
+    -nombre : String
+    -telefono : String
+    -correo : String
+}
+
+class Pedido{
+    -comprador : Cliente
+    -productos : Map<Producto, int>
+    +agregarProducto(p : Producto, cantidad : int) : void
+    +calcularTotal() : void
+}
+
+class Producto{
+    -nombre : String
+    -precio : double
+    -codigo : String
+}
+
+Cliente "1" -- "*" Pedido
+Pedido "1" -- "*" Producto
+
+@enduml
