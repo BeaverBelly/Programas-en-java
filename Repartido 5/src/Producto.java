@@ -17,6 +17,13 @@ public class Producto {
         this.precio = precio;
     }
 
+    public void vender(int cantidad) {
+        if (cantidad > stock) {
+            throw new IllegalArgumentException("No hay suficiente stock para realizar la venta.");
+        }
+        stock -= cantidad;
+    }
+
     public void reponer(int cantidad) {
         if (cantidad <= 0) {
             throw new IllegalArgumentException("La cantidad a reponer debe ser mayor a 0.");
@@ -33,10 +40,9 @@ public class Producto {
         return precio;
     }
 
-    // Setter de precio con validación
     public void setPrecio(double nuevoPrecio) {
         if (nuevoPrecio <= 0) {
-            throw new IllegalArgumentException("El nuevo precio debe ser mayor a 0.");
+            throw new IllegalArgumentException("El nuevo precio debe ser mayor a 0.0");
         }
         this.precio = nuevoPrecio;
     }
