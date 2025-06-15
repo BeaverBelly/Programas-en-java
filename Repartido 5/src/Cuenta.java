@@ -15,7 +15,7 @@ public class Cuenta {
     }
 
     public void retirar(double monto){
-        if (monto > saldo){
+        if (monto > saldo || monto < 0){
             throw new IllegalArgumentException("No puedes retirar más dinero del que tienes.");
         }
         else{
