@@ -1,6 +1,6 @@
 @startuml
 
-Class Persona{
+class Persona{
     -cedula : String
     -nombre : String
     -telefono : String

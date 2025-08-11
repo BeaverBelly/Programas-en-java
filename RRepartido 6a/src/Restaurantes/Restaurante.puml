@@ -1,0 +1,41 @@
+@startuml
+
+class Mesa{
+    -numero : int
+    -capacidadMaximaPersona : int
+}
+
+
+class Cliente{
+    -nombre : String
+    -telefono : String
+    -correo : String
+}
+
+class Reserva{
+    -fecha : LocalDateTime
+    -hora : LocalDateTime
+    -cantidadPersona : int
+
+    +cambiarMesa(mesa : Mesa) : void
+    +cancelarReserva(fecha : LocalDateTime, motivo : String) : void
+}
+
+class Empleado{
+    -identificador : String
+    -nombre : String
+    -rol : String
+}
+
+class Turno{
+    horaInicio : LocalDateTime
+    horaFin : LocalDateTime
+}
+
+
+Empleado "*" -- "*" Turno
+Mesa "*" -- "*" Empleado
+Reserva "1" -- "1" Mesa
+Cliente "1" -- "*" Reserva
+
+@enduml
