@@ -24,15 +24,15 @@ class GestorEstudiantes {
             }
         }
         if (!eliminado) {
-            System.out.println("⚠️ No se encontró estudiante con matrícula: " + numeroMatricula);
+            System.out.println("No se encontró estudiante con matrícula: " + numeroMatricula);
         }
     }
 
     public void mostrarEstudiantes() {
         if (listaEstudiantes.isEmpty()) {
-            System.out.println("📭 No hay estudiantes en la lista.");
+            System.out.println("No hay estudiantes en la lista.");
         } else {
-            System.out.println("📋 Lista de estudiantes:");
+            System.out.println("Lista de estudiantes:");
             for (Estudiante e : listaEstudiantes) {
                 System.out.println(e);
             }

@@ -21,7 +21,7 @@ public class CajeroAutomatico {
         }
 
         saldo -= cantidad;
-        System.out.println("✅ Retiro exitoso. Ha retirado: " + cantidad + " | Saldo restante: " + saldo);
+        System.out.println("Retiro exitoso. Ha retirado: " + cantidad + " | Saldo restante: " + saldo);
     }
 
     public double getSaldo() {
