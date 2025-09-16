@@ -39,7 +39,6 @@ public class RegistrOo extends JFrame {
         txtContrasenia.setToolTipText("Mínimo 8, al menos 1 letra y 1 número");
         txtTelefono.setToolTipText("Opcional: 8 a 12 dígitos");
 
-        // Nombre (mínimo 3 letras, solo texto)
         txtNombre.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -54,7 +53,6 @@ public class RegistrOo extends JFrame {
             }
         });
 
-        // Apellido
         txtApellido.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -69,7 +67,6 @@ public class RegistrOo extends JFrame {
             }
         });
 
-        // Correo
         txtCorreo.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -84,7 +81,6 @@ public class RegistrOo extends JFrame {
             }
         });
 
-        // Usuario (mínimo 5 caracteres)
         txtUsuario.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -99,7 +95,6 @@ public class RegistrOo extends JFrame {
             }
         });
 
-        // Contraseña (mínimo 8, al menos una letra y un número)
         txtContrasenia.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -114,7 +109,6 @@ public class RegistrOo extends JFrame {
             }
         });
 
-        // Confirmar contraseña
         txtConfirmarContrasenia.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -130,7 +124,6 @@ public class RegistrOo extends JFrame {
             }
         });
 
-        // Teléfono (opcional)
         txtTelefono.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -145,7 +138,7 @@ public class RegistrOo extends JFrame {
             }
         });
 
-        btnRegistrar.setEnabled(false); // al inicio deshabilitado
+        btnRegistrar.setEnabled(false);
 
         btnLimpiar.addActionListener(e -> {
             txtNombre.setText("");
@@ -156,7 +149,6 @@ public class RegistrOo extends JFrame {
             txtConfirmarContrasenia.setText("");
             txtTelefono.setText("");
 
-            // Resetear colores (mejor usar el color por defecto del LAF)
             Color def = UIManager.getColor("TextField.background");
             txtNombre.setBackground(def);
             txtApellido.setBackground(def);
@@ -169,7 +161,6 @@ public class RegistrOo extends JFrame {
             btnRegistrar.setEnabled(false);
         });
 
-        // === BOTÓN REGISTRAR ===
         btnRegistrar.addActionListener(e -> {
             JOptionPane.showMessageDialog(this,
                     "Registro exitoso para el usuario: " + txtUsuario.getText(),
@@ -177,11 +168,9 @@ public class RegistrOo extends JFrame {
                     JOptionPane.INFORMATION_MESSAGE);
         });
 
-        // Escucha global para habilitar/deshabilitar Registrar
         addGlobalValidation();
     }
 
-    // Listener global para actualizar el estado del botón Registrar
     private void addGlobalValidation() {
         KeyAdapter validador = new KeyAdapter() {
             @Override
@@ -196,10 +185,8 @@ public class RegistrOo extends JFrame {
         txtUsuario.addKeyListener(validador);
         txtContrasenia.addKeyListener(validador);
         txtConfirmarContrasenia.addKeyListener(validador);
-        // teléfono es opcional: no participa en la habilitación
     }
 
-    // Comprueba si todos los obligatorios están en estado "verde"
     private boolean validarCampos() {
         boolean nombreOk   = txtNombre.getBackground() == Color.GREEN;
         boolean apellidoOk = txtApellido.getBackground() == Color.GREEN;
