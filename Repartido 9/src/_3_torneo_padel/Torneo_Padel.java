@@ -97,7 +97,7 @@ public class Torneo_Padel extends JFrame {
         btnLimpiar.addActionListener(e -> limpiarFormulario());
         btnInscribirse.addActionListener(e -> mostrarResumen());
     }
-    
+
     private boolean emailValido() {
         String email = txtCorreo.getText().trim();
         boolean ok = email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
