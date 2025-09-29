@@ -4,32 +4,24 @@ import java.util.List;
 
 public class FormResumen extends JFrame {
 
-    private JTable tblResumen;
-    private JLabel lblTotal;
-    private DefaultTableModel tablaModel;
-
     public FormResumen(List<DetalleCompra> lista) {
         setTitle("Resumen de Compra");
         setSize(500, 400);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        tblResumen = new JTable();
-        tablaModel = new DefaultTableModel();
+        DefaultTableModel tablaModel = new DefaultTableModel();
         tablaModel.addColumn("Producto");
         tablaModel.addColumn("Precio");
         tablaModel.addColumn("Cantidad");
         tablaModel.addColumn("Subtotal");
-        tblResumen.setModel(tablaModel);
 
-        lblTotal = new JLabel("Total: $0.00");
-
+        JTable tblResumen = new JTable(tablaModel);
         JScrollPane scroll = new JScrollPane(tblResumen);
-        getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
-        getContentPane().add(scroll);
-        getContentPane().add(lblTotal);
 
-        // Llenar tabla
+        JLabel lblTotal = new JLabel("Total: $0.00");
+
+        // Llenar tabla y calcular total
         double total = 0.0;
         for (DetalleCompra d : lista) {
             tablaModel.addRow(new Object[]{
@@ -41,6 +33,10 @@ public class FormResumen extends JFrame {
             total += d.getSubtotal();
         }
         lblTotal.setText(String.format("Total: $%.2f", total));
+
+        getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+        getContentPane().add(scroll);
+        getContentPane().add(lblTotal);
 
         setVisible(true);
     }
