@@ -13,13 +13,12 @@ public class ArchivoCompras {
 
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ARCHIVO))) {
             oos.writeObject(lista);
-            System.out.println("✅ Compras guardadas correctamente.");
+            System.out.println(" Compras guardadas correctamente.");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-    @SuppressWarnings("unchecked")
+    
     public static List<DetalleCompra> leer() {
         File f = new File(ARCHIVO);
         if (!f.exists()) {
