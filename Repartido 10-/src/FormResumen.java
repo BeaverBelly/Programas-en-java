@@ -1,56 +1,47 @@
 import javax.swing.*;
-import java.awt.*;
+import javax.swing.table.DefaultTableModel;
 import java.util.List;
 
 public class FormResumen extends JFrame {
 
-    private JTextArea areaResumen;
+    private JTable tblResumen;
+    private JLabel lblTotal;
+    private DefaultTableModel tablaModel;
 
-    public FormResumen(List<DetalleCompra> listaCompra) {
+    public FormResumen(List<DetalleCompra> lista) {
         setTitle("Resumen de Compra");
+        setSize(500, 400);
+        setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-        areaResumen = new JTextArea(20, 40);
-        areaResumen.setEditable(false);
+        tblResumen = new JTable();
+        tablaModel = new DefaultTableModel();
+        tablaModel.addColumn("Producto");
+        tablaModel.addColumn("Precio");
+        tablaModel.addColumn("Cantidad");
+        tablaModel.addColumn("Subtotal");
+        tblResumen.setModel(tablaModel);
 
-        mostrarResumen(listaCompra);
+        lblTotal = new JLabel("Total: $0.00");
 
-        JScrollPane scrollPane = new JScrollPane(areaResumen);
+        JScrollPane scroll = new JScrollPane(tblResumen);
+        getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+        getContentPane().add(scroll);
+        getContentPane().add(lblTotal);
 
-        // Contenedor principal
-        Container contentPane = getContentPane();
-        contentPane.setLayout(new BorderLayout());
-        contentPane.add(new JLabel("Detalles Finales de la Compra", SwingConstants.CENTER), BorderLayout.NORTH);
-        contentPane.add(scrollPane, BorderLayout.CENTER);
-
-        pack(); // Ajusta el tamaño de la ventana a los componentes
-        setLocationRelativeTo(null); // Centrar en pantalla
-    }
-
-    private void mostrarResumen(List<DetalleCompra> lista) {
-        if (lista.isEmpty()) {
-            areaResumen.setText("No hay productos en la compra.");
-            return;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        double totalGlobal = 0.0;
-
-        sb.append("--- Detalle de Compra ---\n");
-        sb.append(String.format("%-20s %8s %8s %10s\n", "Producto", "Precio", "Cant.", "Subtotal"));
-        sb.append("----------------------------------------------------\n");
-
+        // Llenar tabla
+        double total = 0.0;
         for (DetalleCompra d : lista) {
-            double subtotal = d.getSubtotal();
-            totalGlobal += subtotal;
-            sb.append(String.format("%-20s %8.2f %8d %10.2f\n",
-                    d.getProducto(), d.getPrecio(), d.getCantidad(), subtotal));
+            tablaModel.addRow(new Object[]{
+                    d.getProducto(),
+                    d.getPrecio(),
+                    d.getCantidad(),
+                    d.getSubtotal()
+            });
+            total += d.getSubtotal();
         }
+        lblTotal.setText(String.format("Total: $%.2f", total));
 
-        sb.append("----------------------------------------------------\n");
-        sb.append(String.format("%-40s %10.2f\n", "TOTAL FINAL:", totalGlobal));
-        sb.append("----------------------------------------------------\n");
-
-        areaResumen.setText(sb.toString());
+        setVisible(true);
     }
 }

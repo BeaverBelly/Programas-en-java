@@ -30,6 +30,26 @@ public class FormCompra extends JFrame {
     }
 
     public FormCompra() {
+        // Guardar compra
+        btnGuardar.addActionListener(e -> {
+            List<DetalleCompra> lista = obtenerListaDesdeTabla();
+            ArchivoCompras.guardar(lista);
+        });
+
+// Cargar compra
+        btnCargar.addActionListener(e -> {
+            List<DetalleCompra> lista = ArchivoCompras.leer();
+            poblarTablaDesdeLista(lista);
+        });
+
+        btnResumen.addActionListener(e -> {
+            List<DetalleCompra> lista = obtenerListaDesdeTabla(); // obtiene los productos cargados
+            if (lista.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No hay productos para mostrar.");
+                return;
+            }
+            new FormResumen(lista);
+        });
 
         //---------------Modelo del ComboBox-------------------
 
@@ -150,8 +170,39 @@ public class FormCompra extends JFrame {
         lblValor.setText(String.format("Total: $%.2f", total));
     }
 
+    private List<DetalleCompra> obtenerListaDesdeTabla() {
+        List<DetalleCompra> lista = new ArrayList<>();
+        for (int i = 0; i < tblDetalleCompra.getRowCount(); i++) {
+            String producto = tblDetalleCompra.getValueAt(i, 0).toString();
+            double precio   = ((Number) tblDetalleCompra.getValueAt(i, 2)).doubleValue();
+            int cantidad    = ((Number) tblDetalleCompra.getValueAt(i, 3)).intValue();
+            lista.add(new DetalleCompra(producto, precio, cantidad));
+        }
+        return lista;
+    }
+
+
+
+    // Llena JTable con los datos leídos
+private void poblarTablaDesdeLista(List<DetalleCompra> lista) {
+    DefaultTableModel modelo = (DefaultTableModel) tblDetalleCompra.getModel();
+    modelo.setRowCount(0); // limpiar
+    for (DetalleCompra d : lista) {
+        modelo.addRow(new Object[]{
+            d.getProducto(),
+            d.getPrecio(),
+            d.getCantidad(),
+            d.getSubtotal()
+        });
+    }
+    recalcularTotal();
+}
+
+
     public static void main(String[] args) {
         FormCompra formcompra = new FormCompra();
     }
+
+
 
 }
