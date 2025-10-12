@@ -1,0 +1,29 @@
+Crear las clases del modelo:
+    Mesa.java (Serializable, con id, nombre, mozo, estado)
+    EstadoMesa.java (enum con LIBRE, OCUPADA, RESERVADA)
+
+Crear MesaRepository.java en repository/
+    Usar ArchivoRepository<Mesa> para guardar y cargar mesas.dat
+    Implementar métodos: listar(), crear(), eliminar(), actualizar()
+    Manejar ID autoincremental y persistencia automática
+
+Crear MesaService.java en service/
+    Inyectar MesaRepository
+    Implementar métodos:
+        listar()
+        crear(String nombre)
+        eliminar(int id)
+        asignarMozo(int id, String mozo)
+        cambiarEstado(int id, EstadoMesa nuevoEstado)
+    Validar entradas (nombre vacío, etc.)
+
+En GestionDeMesa.java:
+    Recibir MesaService por constructor
+    Reemplazar listeners “demo” por llamadas al service
+    Implementar método cargarTabla() que recargue los datos después de cada acción
+    Usar JOptionPane para mostrar mensajes y errores
+
+No modificar los .form ni los nombres de los componentes
+Guardar los datos en ~/.resto/mesas/mesas.dat
+Confirmar que la tabla muestre las columnas: ID, Mozo, Mesa, Estado
+Hacer commits claros y descriptivos (uno por clase o funcionalidad)
