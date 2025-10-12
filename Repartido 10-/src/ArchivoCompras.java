@@ -13,13 +13,16 @@ public class ArchivoCompras {
 
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ARCHIVO))) {
             oos.writeObject(lista);
+<<<<<<< HEAD
+            System.out.println(" Compras guardadas correctamente.");
+=======
             System.out.println("Compras guardadas correctamente.");
+>>>>>>> 8f4d91b4472284d35f1881e646b28b58c64d5678
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-    @SuppressWarnings("unchecked")
+    
     public static List<DetalleCompra> leer() {
         File f = new File(ARCHIVO);
         if (!f.exists()) {
