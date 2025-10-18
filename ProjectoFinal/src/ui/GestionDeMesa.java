@@ -1,5 +1,6 @@
 package ui;
 
+import service.MesaService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
@@ -10,17 +11,20 @@ import javax.swing.table.DefaultTableModel;
  * <ul>
  *   <li>Definir y configurar los componentes de interfaz (tabla, campos, combos, botones).</li>
  *   <li>Proveer un {@link JPanel} raíz mediante {@link #getContentPane()} para ser registrado en el Navegador (CardLayout).</li>
- *   <li>Exponer el botón "Volver" mediante {@link #getbtnVolverMenu()} para que el Main/Navegador pueda navegar a "menu".</li>
- *   <li>Proveer utilidades de la vista (p. ej. {@link #getIdSeleccionado()}) para uso posterior por los services.</li>
+ *   <li>Exponer el botón "Volver" mediante {@link #getbtnVolverMenu()} para que el Main/Navegador pueda navegar al menú principal.</li>
+ *   <li>Comunicarse con {@link MesaService} para gestionar las operaciones y persistir datos en el archivo <code>mesas.dat</code>.</li>
  * </ul>
  *
- * <p><b>Qué NO hace:</b> no contiene lógica de negocio ni persistencia. La integración real
- * (crear/eliminar/asignar/cambiar estado) deberá implementarse en un {@code MesaService}
- * y conectarse reemplazando los listeners de ejemplo agregados en el constructor.
+ * <p><b>Qué NO hace:</b> no contiene lógica de negocio ni persistencia directa.
+ * Todo el manejo de archivos se realiza en el Service/Repository.</p>
+ *
+ * <p><b>Columnas de la tabla:</b> ID | Mozo | Mesa | Estado (no editables).</p>
+ *
+ * <p><b>Archivo asociado:</b> <code>~/.resto/mesas/mesas.dat</code></p>
  *
  * <p><b>Uso esperado con Navegador (CardLayout):</b>
  * <pre>{@code
- * var nav  = new Navegador("Restó");
+ * var nav  = new Navegador("Restó POS");
  * var menu = new Menu_Principal();
  * var mesa = new GestionDeMesa();
  *
@@ -29,12 +33,11 @@ import javax.swing.table.DefaultTableModel;
  * mesa.getbtnVolverMenu().addActionListener(e -> nav.irA("menu"));
  * }}</pre>
  *
- * <p><b>Columnas de la tabla:</b> ID | Mozo | Mesa | Estado (no editables).
- *
  * @author Emanuel
- * @since 1.0
+ * @version 1.1
  */
 public class GestionDeMesa {
+
     /** Panel raíz que se agrega al Navegador (CardLayout). */
     private JPanel contentPane;
 
@@ -63,32 +66,35 @@ public class GestionDeMesa {
 
     /**
      * Constructor: configura el modelo de la tabla, el combo de estados y
-     * listeners de ejemplo (solo visuales) para validar interacción de la UI.
-     * <p>
-     * IMPORTANTE: Los listeners actuales agregan/modifican datos en el modelo de la tabla
-     * con fines demostrativos. Al integrar la lógica real, reemplazar por llamadas a
-     * {@code MesaService} y recargar la tabla desde el service (ej.: {@code cargarTabla()}).
+     * los listeners conectados al {@link MesaService}.
      */
     public GestionDeMesa() {
-        // Modelo no editable con los encabezados pedidos
+        // Service: maneja toda la lógica y persistencia
+        MesaService service = new MesaService();
+
+        // Modelo de tabla no editable
         DefaultTableModel model = new DefaultTableModel(
-                new Object[]{"ID", "Mozo", "Mesa", "Estado"}, 0) {
+                new Object[]{"ID", "Mozo", "Mesa", "Estado"}, 0
+        ) {
             @Override public boolean isCellEditable(int row, int column) { return false; }
         };
         tablaRestaurante.setModel(model);
 
-        // Selección de una sola fila (útil para acciones de editar/eliminar)
+        // Selección de una sola fila (útil para editar o eliminar)
         tablaRestaurante.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Cargar los estados posibles en el combo (coinciden con el enum EstadoMesa)
+        // Estados posibles de la mesa
         comboEstadoMesa.removeAllItems();
         comboEstadoMesa.addItem("LIBRE");
         comboEstadoMesa.addItem("OCUPADA");
         comboEstadoMesa.addItem("RESERVADA");
 
-        // ----------------- Listeners de demostración (solo UI) -----------------
-        // Al integrar Service: reemplazar por service.crear(...), service.eliminar(...), etc.
+        // Cargar los datos iniciales desde el archivo mesas.dat
+        recargarTabla(service, model);
 
+        // -------------------- LISTENERS --------------------
+
+        // ➕ Agregar mesa
         btnAgregarMesa.addActionListener(e -> {
             String mozo = txtMozo.getText().trim();
             String mesa = txtMesa.getText().trim();
@@ -99,57 +105,77 @@ public class GestionDeMesa {
                 return;
             }
 
-            // UI demo: ID "0" temporal. Con Service, venir con ID real/autoincremental.
-            model.addRow(new Object[]{0, mozo.isEmpty() ? "—" : mozo, mesa, estado});
+            service.agregar(mozo, mesa, estado);
+            recargarTabla(service, model);
+
             txtMesa.setText("");
             txtMozo.setText("");
         });
 
+        // ❌ Eliminar mesa
         btnEliminarMesa.addActionListener(e -> {
-            int row = tablaRestaurante.getSelectedRow();
-            if (row == -1) {
+            Integer id = getIdSeleccionado();
+            if (id == null) {
                 JOptionPane.showMessageDialog(contentPane, "Seleccione una mesa para eliminar.");
                 return;
             }
-            model.removeRow(row);
+            service.eliminar(id);
+            recargarTabla(service, model);
         });
 
+        // 🔄 Cambiar estado de mesa
         btnCambiarEstado.addActionListener(e -> {
-            int row = tablaRestaurante.getSelectedRow();
-            if (row == -1) {
+            Integer id = getIdSeleccionado();
+            if (id == null) {
                 JOptionPane.showMessageDialog(contentPane, "Seleccione una mesa para cambiar el estado.");
                 return;
             }
             String nuevoEstado = (String) comboEstadoMesa.getSelectedItem();
-            model.setValueAt(nuevoEstado, row, 3);
+            service.cambiarEstado(id, nuevoEstado);
+            recargarTabla(service, model);
         });
 
+        // 👨‍🍳 Asignar mozo
         btnAsignarMozo.addActionListener(e -> {
-            int row = tablaRestaurante.getSelectedRow();
-            if (row == -1) {
+            Integer id = getIdSeleccionado();
+            if (id == null) {
                 JOptionPane.showMessageDialog(contentPane, "Seleccione una mesa para asignar mozo.");
                 return;
             }
             String mozo = txtMozo.getText().trim();
-            model.setValueAt(mozo.isEmpty() ? "—" : mozo, row, 1);
+            service.asignarMozo(id, mozo.isEmpty() ? "—" : mozo);
             txtMozo.setText("");
+            recargarTabla(service, model);
         });
-        // ----------------------------------------------------------------------
+    }
+
+    // =========================================================================
+    // MÉTODOS AUXILIARES DE UI
+    // =========================================================================
+
+    /**
+     * Recarga la tabla con los datos actualizados del {@link MesaService}.
+     *
+     * @param service servicio de mesas desde el cual se obtienen los datos.
+     * @param model modelo de la tabla a refrescar.
+     */
+    private void recargarTabla(MesaService service, DefaultTableModel model) {
+        model.setRowCount(0);
+        for (Object[] fila : service.listar()) {
+            model.addRow(fila);
+        }
     }
 
     /**
      * Devuelve el ID (columna 0) de la fila actualmente seleccionada en la tabla.
-     * <p>
-     * Útil para que el Service opere por ID (eliminación, cambios de estado, etc.).
      *
      * @return {@code Integer} con el ID seleccionado, o {@code null} si no hay selección.
-     * @throws NumberFormatException si la celda 0 no puede parsearse a Integer.
      */
     private Integer getIdSeleccionado() {
         int row = tablaRestaurante.getSelectedRow();
         if (row == -1) return null;
         Object val = tablaRestaurante.getModel().getValueAt(row, 0);
-        return (val instanceof Integer) ? (Integer) val : Integer.valueOf(val.toString());
+        return (Integer) val;
     }
 
     /**
@@ -171,7 +197,6 @@ public class GestionDeMesa {
      * @return botón que dispara la navegación de retorno al menú.
      */
     public JButton getbtnVolverMenu() {
-        // Sugerencia de nombre estándar JavaBean: getBtnVolverAlMenu()
         return btnVolverAlMenu;
     }
 }
