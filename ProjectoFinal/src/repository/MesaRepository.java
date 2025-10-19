@@ -1,5 +1,6 @@
 package repository;
 
+import java.nio.file.Paths;
 import java.util.List;
 
 public class MesaRepository extends ArchivoRepository<Object[]> {
@@ -7,7 +8,8 @@ public class MesaRepository extends ArchivoRepository<Object[]> {
     private static final String ARCHIVO = "mesas.dat";
 
     public MesaRepository() {
-        super("mesas"); // carpeta ~/.resto/mesas/
+        // Guarda los datos dentro del proyecto, en /data/mesas/
+        super(Paths.get(System.getProperty("user.dir"), "data", "mesas"));
     }
 
     public void guardarMesas(List<Object[]> mesas) {

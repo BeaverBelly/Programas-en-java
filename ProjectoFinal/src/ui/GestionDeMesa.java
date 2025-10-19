@@ -94,7 +94,7 @@ public class GestionDeMesa {
 
         // -------------------- LISTENERS --------------------
 
-        // ➕ Agregar mesa
+        // Agregar Mesa
         btnAgregarMesa.addActionListener(e -> {
             String mozo = txtMozo.getText().trim();
             String mesa = txtMesa.getText().trim();
@@ -112,7 +112,7 @@ public class GestionDeMesa {
             txtMozo.setText("");
         });
 
-        // ❌ Eliminar mesa
+        // Eliminar Mesa
         btnEliminarMesa.addActionListener(e -> {
             Integer id = getIdSeleccionado();
             if (id == null) {
@@ -123,7 +123,7 @@ public class GestionDeMesa {
             recargarTabla(service, model);
         });
 
-        // 🔄 Cambiar estado de mesa
+        // Cambiar estado de mesa
         btnCambiarEstado.addActionListener(e -> {
             Integer id = getIdSeleccionado();
             if (id == null) {
@@ -135,7 +135,7 @@ public class GestionDeMesa {
             recargarTabla(service, model);
         });
 
-        // 👨‍🍳 Asignar mozo
+        // Asignar mozo
         btnAsignarMozo.addActionListener(e -> {
             Integer id = getIdSeleccionado();
             if (id == null) {
