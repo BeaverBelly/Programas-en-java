@@ -1,60 +1,103 @@
 package service;
 
 import repository.MesaRepository;
+import Model.mesa;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Servicio que contiene la lógica de negocio para la gestión de Mesas.
+ * Actúa como intermediario entre la capa UI/Controlador y la capa de Persistencia (Repository).
+ * * Trabaja directamente con objetos Mesa.
+ */
 public class MesaService {
 
     private final MesaRepository repo;
-    private final List<Object[]> mesas;
+    private final List<mesa> mesas; // Almacenamiento principal: List<Mesa>
     private final AtomicInteger nextId;
 
+    /**
+     * Constructor: carga los datos iniciales y determina el próximo ID disponible.
+     */
     public MesaService() {
         this.repo = new MesaRepository();
+        // Carga la lista de objetos Mesa
         this.mesas = repo.cargarMesas();
 
+        // Determina el ID más alto de las mesas cargadas
         int maxId = mesas.stream()
-                .mapToInt(f -> (Integer) f[0])
+                .mapToInt(mesa::getId) // Usa el getter del objeto Mesa
                 .max()
                 .orElse(0);
         this.nextId = new AtomicInteger(maxId + 1);
     }
 
-    public List<Object[]> listar() {
+    // ------------------- OPERACIONES DE LECTURA -------------------
+
+    /**
+     * Devuelve una copia de la lista de mesas almacenadas.
+     * @return List<Mesa> con todas las mesas.
+     */
+    public List<mesa> listar() {
         return new ArrayList<>(mesas);
     }
 
+    // ------------------- OPERACIONES DE ESCRITURA -------------------
+
+    /**
+     * Agrega una nueva mesa al sistema.
+     * @param mozo Nombre del mozo (o "—").
+     * @param nombreMesa Nombre descriptivo de la mesa.
+     * @param estado Estado inicial (LIBRE, OCUPADA, RESERVADA).
+     */
     public void agregar(String mozo, String nombreMesa, String estado) {
-        Object[] nueva = {
+        // Crea un nuevo objeto Mesa
+        mesa nueva = new mesa(
                 nextId.getAndIncrement(),
-                mozo.isEmpty() ? "—" : mozo,
+                mozo.isEmpty() ? "—" : mozo, // Asigna "—" si el mozo está vacío
                 nombreMesa,
                 estado
-        };
+        );
         mesas.add(nueva);
         repo.guardarMesas(mesas);
     }
 
+    /**
+     * Elimina una mesa por su ID.
+     * @param id El ID de la mesa a eliminar.
+     */
     public void eliminar(int id) {
-        mesas.removeIf(m -> ((Integer) m[0]) == id);
+        // Usa el getter getId() para la condición de eliminación
+        mesas.removeIf(m -> m.getId() == id);
         repo.guardarMesas(mesas);
     }
 
+    /**
+     * Cambia el estado de una mesa.
+     * @param id El ID de la mesa a modificar.
+     * @param nuevoEstado El nuevo estado (LIBRE, OCUPADA, RESERVADA).
+     */
     public void cambiarEstado(int id, String nuevoEstado) {
-        for (Object[] fila : mesas) {
-            if (((Integer) fila[0]) == id) {
-                fila[3] = nuevoEstado;
+        for (mesa mesa : mesas) {
+            if (mesa.getId() == id) {
+                // Usa el setter setEstado()
+                mesa.setEstado(nuevoEstado);
                 break;
             }
         }
         repo.guardarMesas(mesas);
     }
 
+    /**
+     * Asigna o reasigna un mozo a una mesa.
+     * @param id El ID de la mesa a modificar.
+     * @param mozo El nombre del mozo a asignar.
+     */
     public void asignarMozo(int id, String mozo) {
-        for (Object[] fila : mesas) {
-            if (((Integer) fila[0]) == id) {
-                fila[1] = mozo;
+        for (mesa mesa : mesas) {
+            if (mesa.getId() == id) {
+                // Usa el setter setMozo()
+                mesa.setMozo(mozo.isEmpty() ? "—" : mozo);
                 break;
             }
         }

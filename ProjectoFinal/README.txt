@@ -10,7 +10,7 @@ Descripción general
 
 Aplicación de escritorio desarrollada en Java (Swing) que permite gestionar las operaciones esenciales de un restaurante desde una interfaz moderna, modular y fácil de mantener.
 
-El sistema implementa el patrón MVC (Modelo–Vista–Controlador) junto con una arquitectura por paquetes, separando claramente la interfaz, la lógica de negocio y la persistencia de datos.
+El sistema implementa el patrón MVC (Model–Vista–Controlador) junto con una arquitectura por paquetes, separando claramente la interfaz, la lógica de negocio y la persistencia de datos.
 La navegación entre pantallas se realiza mediante la clase Navegador, que utiliza un CardLayout para mantener una única ventana principal y cambiar entre vistas de forma fluida.
 
 Funcionalidades principales

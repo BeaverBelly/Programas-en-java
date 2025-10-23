@@ -3,38 +3,18 @@ package ui;
 import service.MesaService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import Model.mesa; // Importamos la clase Mesa
 
 /**
  * Pantalla de UI para la <b>Gestión de Mesas</b> del restaurante.
  * <p>
- * Responsabilidades de esta clase (solo capa visual):
- * <ul>
- *   <li>Definir y configurar los componentes de interfaz (tabla, campos, combos, botones).</li>
- *   <li>Proveer un {@link JPanel} raíz mediante {@link #getContentPane()} para ser registrado en el Navegador (CardLayout).</li>
- *   <li>Exponer el botón "Volver" mediante {@link #getbtnVolverMenu()} para que el Main/Navegador pueda navegar al menú principal.</li>
- *   <li>Comunicarse con {@link MesaService} para gestionar las operaciones y persistir datos en el archivo <code>mesas.dat</code>.</li>
- * </ul>
- *
- * <p><b>Qué NO hace:</b> no contiene lógica de negocio ni persistencia directa.
- * Todo el manejo de archivos se realiza en el Service/Repository.</p>
- *
- * <p><b>Columnas de la tabla:</b> ID | Mozo | Mesa | Estado (no editables).</p>
+ * Responsabilidades: Interfaz visual y manejo de eventos.
+ * Se comunica con {@link MesaService} para la lógica y datos.
  *
  * <p><b>Archivo asociado:</b> <code>~/.resto/mesas/mesas.dat</code></p>
  *
- * <p><b>Uso esperado con Navegador (CardLayout):</b>
- * <pre>{@code
- * var nav  = new Navegador("Restó POS");
- * var menu = new Menu_Principal();
- * var mesa = new GestionDeMesa();
- *
- * nav.registrar("menu", menu.getContentPane());
- * nav.registrar("mesa", mesa.getContentPane());
- * mesa.getbtnVolverMenu().addActionListener(e -> nav.irA("menu"));
- * }}</pre>
- *
  * @author Emanuel
- * @version 1.1
+ * @version 1.2 (Adaptado a modelo Mesa)
  */
 public class GestionDeMesa {
 
@@ -52,7 +32,7 @@ public class GestionDeMesa {
     private JButton btnEliminarMesa;
     private JButton btnAsignarMozo;
     private JButton btnCambiarEstado;
-    private JButton btnVolverAlMenu;
+    private JButton btnVolverAlMenu; // <-- Este es el botón que necesita el Main
 
     /** Campos de entrada. */
     private JTextField txtMesa;
@@ -65,10 +45,18 @@ public class GestionDeMesa {
     private JLabel lblGestionMesa;
 
     /**
-     * Constructor: configura el modelo de la tabla, el combo de estados y
-     * los listeners conectados al {@link MesaService}.
+     * Constructor: Configura el Service y llama a setupUI().
      */
     public GestionDeMesa() {
+        // La inicialización visual ocurre antes de que el constructor termine.
+        setupUI();
+    }
+
+    /**
+     * Configura el modelo de la tabla, el combo de estados y
+     * los listeners, asegurando que los componentes ya están inicializados.
+     */
+    private void setupUI() {
         // Service: maneja toda la lógica y persistencia
         MesaService service = new MesaService();
 
@@ -99,13 +87,14 @@ public class GestionDeMesa {
             String mozo = txtMozo.getText().trim();
             String mesa = txtMesa.getText().trim();
             String estado = (String) comboEstadoMesa.getSelectedItem();
+            String mozoFinal = mozo.isEmpty() ? "—" : mozo;
 
             if (mesa.isEmpty()) {
                 JOptionPane.showMessageDialog(contentPane, "Debe ingresar el nombre de la mesa.");
                 return;
             }
 
-            service.agregar(mozo, mesa, estado);
+            service.agregar(mozoFinal, mesa, estado);
             recargarTabla(service, model);
 
             txtMesa.setText("");
@@ -119,8 +108,14 @@ public class GestionDeMesa {
                 JOptionPane.showMessageDialog(contentPane, "Seleccione una mesa para eliminar.");
                 return;
             }
-            service.eliminar(id);
-            recargarTabla(service, model);
+            int confirm = JOptionPane.showConfirmDialog(contentPane,
+                    "¿Está seguro de eliminar la mesa ID " + id + "?",
+                    "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                service.eliminar(id);
+                recargarTabla(service, model);
+            }
         });
 
         // Cambiar estado de mesa
@@ -143,9 +138,22 @@ public class GestionDeMesa {
                 return;
             }
             String mozo = txtMozo.getText().trim();
-            service.asignarMozo(id, mozo.isEmpty() ? "—" : mozo);
+            String mozoFinal = mozo.isEmpty() ? "—" : mozo;
+
+            service.asignarMozo(id, mozoFinal);
             txtMozo.setText("");
             recargarTabla(service, model);
+        });
+
+        // Listener para seleccionar fila y rellenar campos
+        tablaRestaurante.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int row = tablaRestaurante.getSelectedRow();
+                if (row != -1) {
+                    txtMozo.setText((String) tablaRestaurante.getValueAt(row, 1));
+                    comboEstadoMesa.setSelectedItem(tablaRestaurante.getValueAt(row, 3));
+                }
+            }
         });
     }
 
@@ -155,21 +163,25 @@ public class GestionDeMesa {
 
     /**
      * Recarga la tabla con los datos actualizados del {@link MesaService}.
-     *
-     * @param service servicio de mesas desde el cual se obtienen los datos.
-     * @param model modelo de la tabla a refrescar.
+     * Convierte List<Mesa> a Object[] para la tabla.
      */
     private void recargarTabla(MesaService service, DefaultTableModel model) {
         model.setRowCount(0);
-        for (Object[] fila : service.listar()) {
+
+        for (mesa mesa : service.listar()) {
+            // Convierte Mesa a Object[] para agregar la fila
+            Object[] fila = new Object[]{
+                    mesa.getId(),
+                    mesa.getMozo(),
+                    mesa.getNombre(),
+                    mesa.getEstado()
+            };
             model.addRow(fila);
         }
     }
 
     /**
      * Devuelve el ID (columna 0) de la fila actualmente seleccionada en la tabla.
-     *
-     * @return {@code Integer} con el ID seleccionado, o {@code null} si no hay selección.
      */
     private Integer getIdSeleccionado() {
         int row = tablaRestaurante.getSelectedRow();
@@ -178,25 +190,25 @@ public class GestionDeMesa {
         return (Integer) val;
     }
 
+    // =========================================================================
+    // MÉTODOS PÚBLICOS NECESARIOS PARA EL MAIN/NAVEGADOR
+    // =========================================================================
+
     /**
-     * Panel raíz de la vista. Este panel es el que se registra en el Navegador
-     * bajo una clave (por ej. "mesa") para poder navegar con CardLayout.
+     * Panel raíz de la vista. NECESARIO para el Navegador (CardLayout).
      *
      * @return panel principal de la pantalla.
      */
-    public JPanel getContentPane() {
+    public JPanel getContentPane() { // <-- MÉTODO QUE FALTABA
         return contentPane;
     }
 
     /**
-     * Getter del botón "Volver al menú".
-     * <p>
-     * El {@code Main} (o quien maneje el Navegador) debe conectar este botón a:
-     * {@code nav.irA("menu")}.
+     * Getter del botón "Volver al menú". NECESARIO para el Main/Navegador.
      *
      * @return botón que dispara la navegación de retorno al menú.
      */
-    public JButton getbtnVolverMenu() {
+    public JButton getbtnVolverMenu() { // <-- MÉTODO QUE FALTABA
         return btnVolverAlMenu;
     }
 }

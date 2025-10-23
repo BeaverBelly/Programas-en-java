@@ -1,22 +1,24 @@
 package repository;
 
+import Model.mesa;
 import java.nio.file.Paths;
 import java.util.List;
 
-public class MesaRepository extends ArchivoRepository<Object[]> {
+public class MesaRepository extends ArchivoRepository<mesa> {
 
     private static final String ARCHIVO = "mesas.dat";
 
     public MesaRepository() {
-        // Guarda los datos dentro del proyecto, en /data/mesas/
+        // CAMBIO: Ahora guarda los datos dentro de la carpeta 'src/repository/'
+        // Se asume que System.getProperty("user.dir") es la carpeta raíz del proyecto (ProyectoFinal)
         super(Paths.get(System.getProperty("user.dir"), "data", "mesas"));
     }
 
-    public void guardarMesas(List<Object[]> mesas) {
+    public void guardarMesas(List<mesa> mesas) {
         guardar(mesas, ARCHIVO);
     }
 
-    public List<Object[]> cargarMesas() {
+    public List<mesa> cargarMesas() {
         return cargar(ARCHIVO);
     }
 }
