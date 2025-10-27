@@ -4,6 +4,7 @@ import repository.ProductoRepository;
 import Model.Producto;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class ProductoService {
 
@@ -13,13 +14,32 @@ public class ProductoService {
 
     public ProductoService() {
         this.repo = new ProductoRepository();
-        this.productos = repo.cargarProductos();
+        this.productos = repo.cargarProductos(); // Carga los datos existentes
 
+        // Calcula el siguiente ID basándose en los datos cargados.
         int maxId = productos.stream()
                 .mapToInt(Producto::getId)
                 .max()
-                .orElse(0);
+                .orElse(0); // Si no hay datos, empieza en 0.
         this.nextId = new AtomicInteger(maxId + 1);
+
+    }
+
+    /**
+     * Obtiene todos los productos y los mapea a un formato de fila de JTable.
+     * {"ID","Nombre","Categoría","Precio","Stock","Activo"}
+     */
+    public List<Object[]> obtenerProductosParaTabla() {
+        return productos.stream()
+                .map(p -> new Object[]{
+                        p.getId(),
+                        p.getNombre(),
+                        p.getCategoria(),
+                        p.getPrecio(),
+                        p.getStock(),
+                        p.isActivo()
+                })
+                .collect(Collectors.toList());
     }
 
     public List<Producto> listar() {
@@ -39,13 +59,11 @@ public class ProductoService {
         repo.guardarProductos(productos);
     }
 
-    // Método para eliminar un producto
     public void eliminar(int id) {
         productos.removeIf(p -> p.getId() == id);
         repo.guardarProductos(productos);
     }
 
-    // Método para modificar un producto (recibe el objeto completo y busca el ID)
     public void modificar(int id, String nombre, String categoria, double precio, int stock, boolean activo) {
         for (Producto p : productos) {
             if (p.getId() == id) {
@@ -59,6 +77,4 @@ public class ProductoService {
         }
         repo.guardarProductos(productos);
     }
-
-    // Puedes agregar aquí un método para buscar si lo necesitas en el futuro
 }

@@ -80,7 +80,6 @@ public class GestionDeMesa {
         // Cargar los datos iniciales desde el archivo mesas.dat
         recargarTabla(service, model);
 
-        // -------------------- LISTENERS --------------------
 
         // Agregar Mesa
         btnAgregarMesa.addActionListener(e -> {
@@ -157,10 +156,6 @@ public class GestionDeMesa {
         });
     }
 
-    // =========================================================================
-    // MÉTODOS AUXILIARES DE UI
-    // =========================================================================
-
     /**
      * Recarga la tabla con los datos actualizados del {@link MesaService}.
      * Convierte List<Mesa> a Object[] para la tabla.
@@ -189,10 +184,6 @@ public class GestionDeMesa {
         Object val = tablaRestaurante.getModel().getValueAt(row, 0);
         return (Integer) val;
     }
-
-    // =========================================================================
-    // MÉTODOS PÚBLICOS NECESARIOS PARA EL MAIN/NAVEGADOR
-    // =========================================================================
 
     /**
      * Panel raíz de la vista. NECESARIO para el Navegador (CardLayout).

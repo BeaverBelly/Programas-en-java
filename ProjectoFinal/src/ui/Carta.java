@@ -17,10 +17,6 @@ import service.ProductoService;
  */
 public class Carta {
 
-    // =========================================================================
-    // DECLARACIÓN DE COMPONENTES
-    // =========================================================================
-
     private JPanel contentPane;
     private JButton btnLimpiar;
     private JButton btnBuscar;
@@ -42,13 +38,10 @@ public class Carta {
     private JLabel lblPrecio;
     private JLabel lblStock;
 
-    // Campos de control
+
     private ProductoService service;
     private DefaultTableModel tableModel;
 
-    // =========================================================================
-    // CONSTRUCTOR Y SETUP
-    // =========================================================================
 
     public Carta(){
         // Inicialización del Servicio
@@ -88,9 +81,7 @@ public class Carta {
         // Cargar datos iniciales
         recargarTabla();
 
-        // -------------------- LISTENERS --------------------
 
-        // Listener para Clic en la Tabla (Rellenar Formulario)
         tableProducto.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -162,10 +153,6 @@ public class Carta {
             recargarTabla(texto);
         });
     }
-
-    // =========================================================================
-    // MÉTODOS AUXILIARES
-    // =========================================================================
 
     /**
      * Recarga la tabla con los datos del ProductoService, opcionalmente filtrando por nombre.
@@ -257,10 +244,6 @@ public class Carta {
         txtNombre.requestFocus();
     }
 
-
-    // =========================================================================
-    // GETTERS PÚBLICOS (TODOS LOS COMPONENTES ASEGURADOS)
-    // =========================================================================
 
     public JPanel getContentPane() { return contentPane; }
     public JTable getTableProducto() { return tableProducto; }

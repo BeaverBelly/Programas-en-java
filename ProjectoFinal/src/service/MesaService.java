@@ -103,4 +103,13 @@ public class MesaService {
         }
         repo.guardarMesas(mesas);
     }
+    /**
+     * Obtiene los nombres de todas las mesas para poblar el JComboBox de la UI.
+     * @return List<String> con los nombres de las mesas.
+     */
+    public List<String> obtenerNombresDeMesas() {
+        return mesas.stream()
+                .map(mesa::getNombre) // Usa el getter getNombre() del modelo Mesa
+                .collect(java.util.stream.Collectors.toList());
+    }
 }
