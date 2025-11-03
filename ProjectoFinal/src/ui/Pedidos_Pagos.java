@@ -29,6 +29,13 @@ public class Pedidos_Pagos {
     private JLabel lblCatProd;
     private JLabel lblItemPedido;
 
+    // 🔹 Clase interna de excepción personalizada
+    public static class StockInsuficienteException extends Exception {
+        public StockInsuficienteException(String mensaje) {
+            super(mensaje);
+        }
+    }
+
     public Pedidos_Pagos() {
 
         if (tblProductos == null) { this.tblProductos = new JTable(); }
@@ -38,7 +45,6 @@ public class Pedidos_Pagos {
         if (lblsubTotal == null) { this.lblsubTotal = new JLabel(); }
         if (lblTotal == null) { this.lblTotal = new JLabel(); }
         if (txtBuscar == null) { this.txtBuscar = new JTextField(); }
-
 
         // Tabla de Productos (Catálogo)
         DefaultTableModel modelProd = new DefaultTableModel(
@@ -81,11 +87,12 @@ public class Pedidos_Pagos {
 
         setTotales(0.0, 0.0);
 
-
-        // Llama a cargarDatosIniciales (que a su vez llama a cargarCarta)
+        // Cargar datos iniciales
         cargarDatosIniciales();
 
+        // ==============================
         // Lógica de AGREGAR ITEM
+        // ==============================
         btnAgregarItem.addActionListener(e -> {
             int filaSeleccionada = tblProductos.getSelectedRow();
             int cantidad = getCantidad();
@@ -100,9 +107,9 @@ public class Pedidos_Pagos {
                 Double precioUnitario = (Double) modelProdCheck.getValueAt(filaSeleccionada, 3);
                 Integer stockActual = (Integer) modelProdCheck.getValueAt(filaSeleccionada, 4);
 
+                // 🔸 Verificar stock
                 if (cantidad > stockActual) {
-                    showError("No hay suficiente stock disponible (" + stockActual + ").");
-                    return;
+                    throw new StockInsuficienteException("Stock insuficiente para " + nombre + ". Disponible: " + stockActual);
                 }
 
                 double subtotal = precioUnitario * cantidad;
@@ -115,13 +122,17 @@ public class Pedidos_Pagos {
                 spCantidad.setValue(1);
                 tblProductos.clearSelection();
 
+            } catch (StockInsuficienteException sie) {
+                showError(sie.getMessage());
             } catch (Exception ex) {
                 showError("Error al agregar el ítem. Detalle: " + ex.getMessage());
                 ex.printStackTrace();
             }
         });
 
+        // ==============================
         // Lógica de QUITAR ITEM
+        // ==============================
         btnQuitarItem.addActionListener(e -> {
             int filaSeleccionada = tblPedido.getSelectedRow();
             if (filaSeleccionada == -1) { showError("Seleccione un ítem del pedido para quitar."); return; }
@@ -133,7 +144,9 @@ public class Pedidos_Pagos {
             }
         });
 
-        // Lógica de CONFIRMAR PAGO y GUARDAR ARCHIVO
+        // ==============================
+        // Lógica de CONFIRMAR PAGO
+        // ==============================
         btnConfirmar.addActionListener(e -> {
             var modelPedido = (DefaultTableModel) tblPedido.getModel();
             if (modelPedido.getRowCount() == 0) { showError("No hay ítems en el pedido para confirmar."); return; }
@@ -163,22 +176,20 @@ public class Pedidos_Pagos {
             try {
                 PedidoRepository repo = new PedidoRepository();
                 repo.guardarPedido(nuevoPedido);
-
                 showInfo("Pedido guardado y pago confirmado con éxito!");
-
-                // Limpiar UI
                 modelPedido.setRowCount(0);
                 recalcularTotalesUI();
                 tblProductos.clearSelection();
                 spCantidad.setValue(1);
-
             } catch (Exception ex) {
                 showError("Error al guardar el archivo del pedido. Detalle: " + ex.getMessage());
                 ex.printStackTrace();
             }
         });
 
-        // Lógica de LIMPIAR/RECARGAR CARTA (Mantenida como opción manual si se necesita)
+        // ==============================
+        // Lógica de LIMPIAR/RECARGAR CARTA
+        // ==============================
         if (btnLimpiar != null) {
             btnLimpiar.addActionListener(e -> {
                 txtBuscar.setText("");
@@ -186,29 +197,22 @@ public class Pedidos_Pagos {
                 showInfo("Carta recargada con éxito de forma manual.");
             });
         }
-
     }
 
-
-    /**
-     * Carga las mesas y hace la primera llamada para cargar la carta.
-     */
+    // -----------------------------
+    // Métodos auxiliares
+    // -----------------------------
     public void cargarDatosIniciales() {
         try {
             MesaService mesaService = new MesaService();
             setMesas(mesaService.obtenerNombresDeMesas());
             cargarCarta();
-
         } catch (Exception e) {
             showError("Error al cargar datos iniciales. Detalle: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    /**
-     * Recarga únicamente la tabla de productos (la Carta) leyendo el archivo de persistencia.
-     * ESTE METODO ES LLAMADO DESDE Main.java
-     */
     public void cargarCarta() {
         try {
             ProductoService productoService = new ProductoService();
@@ -268,60 +272,18 @@ public class Pedidos_Pagos {
     public void showError(String msg) { JOptionPane.showMessageDialog(contentPane, msg, "Error", JOptionPane.ERROR_MESSAGE); }
     public boolean confirm(String msg) { return JOptionPane.showConfirmDialog(contentPane, msg, "Confirmar", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION; }
 
-
-    public JPanel getContentPane() {
-        return contentPane;
-    }
-
-    public JTable getTblProductos() {
-        return tblProductos;
-    }
-
-    public JTable getTblPedido() {
-        return tblPedido;
-    }
-
-    public JButton getBtnAgregarItem() {
-        return btnAgregarItem;
-    }
-
-    public JButton getBtnVolver() {
-        return btnVolver;
-    }
-
-    public JButton getBtnConfirmar() {
-        return btnConfirmar;
-    }
-
-    public JButton getBtnQuitarItem() {
-        return btnQuitarItem;
-    }
-
-    public JButton getBtnBuscar() {
-        return btnBuscar;
-    }
-
-    public JButton getBtnLimpiar() {
-        return btnLimpiar;
-    }
-
-    public JComboBox<String> getCboMesa() {
-        return cboMesa;
-    }
-
-    public JComboBox<String> getCboMetPago() {
-        return cboMetPago;
-    }
-
-    public JSpinner getSpCantidad() {
-        return spCantidad;
-    }
-
-    public JLabel getLblSubTotal() {
-        return lblsubTotal;
-    }
-
-    public JLabel getLblTotal() {
-        return lblTotal;
-    }
+    public JPanel getContentPane() { return contentPane; }
+    public JTable getTblProductos() { return tblProductos; }
+    public JTable getTblPedido() { return tblPedido; }
+    public JButton getBtnAgregarItem() { return btnAgregarItem; }
+    public JButton getBtnVolver() { return btnVolver; }
+    public JButton getBtnConfirmar() { return btnConfirmar; }
+    public JButton getBtnQuitarItem() { return btnQuitarItem; }
+    public JButton getBtnBuscar() { return btnBuscar; }
+    public JButton getBtnLimpiar() { return btnLimpiar; }
+    public JComboBox<String> getCboMesa() { return cboMesa; }
+    public JComboBox<String> getCboMetPago() { return cboMetPago; }
+    public JSpinner getSpCantidad() { return spCantidad; }
+    public JLabel getLblSubTotal() { return lblsubTotal; }
+    public JLabel getLblTotal() { return lblTotal; }
 }
