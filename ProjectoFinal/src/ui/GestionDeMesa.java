@@ -1,19 +1,21 @@
 package ui;
 
 import service.MesaService;
+import exceptions.MesaNoDisponibleException;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import Model.mesa;
 
 /**
- * Pantalla de UI para la <b>Gestión de Mesas</b> del restaurante.
- * Interfaz visual que se comunica con {@link MesaService}.
+ * Gestión de Mesas del restaurante.
+ * Usa MesaNoDisponibleException para manejar todas las validaciones personalizadas.
  */
 public class GestionDeMesa {
 
-    private JPanel contentPane;
-    private JTable tablaRestaurante;
-    private JComboBox comboEstadoMesa;
+    // ------------------ COMPONENTES DEL FORM ------------------
+    private JPanel contentPane;         // Panel raíz del form
+    private JTable tablaRestaurante;    // Tabla de mesas
+    private JComboBox<String> comboEstadoMesa; // Combo de estados
     private JButton btnAgregarMesa;
     private JButton btnEliminarMesa;
     private JButton btnAsignarMozo;
@@ -21,8 +23,10 @@ public class GestionDeMesa {
     private JButton btnVolverAlMenu;
     private JTextField txtMesa;
     private JTextField txtMozo;
-    private JLabel lblMozo;
+
+    // JLabel predefinidos en el .form (mantener nombres exactos)
     private JLabel lblMesa;
+    private JLabel lblMozo;
     private JLabel lblEstadoMesa;
     private JLabel lblGestionMesa;
 
@@ -31,15 +35,14 @@ public class GestionDeMesa {
     }
 
     private void setupUI() {
+        // SOLO inicializar los componentes que no están en el .form
         MesaService service = new MesaService();
 
         DefaultTableModel model = new DefaultTableModel(
                 new Object[]{"ID", "Mozo", "Mesa", "Estado"}, 0
         ) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            public boolean isCellEditable(int row, int column) { return false; }
         };
         tablaRestaurante.setModel(model);
         tablaRestaurante.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -50,106 +53,73 @@ public class GestionDeMesa {
         comboEstadoMesa.addItem("OCUPADA");
         comboEstadoMesa.addItem("RESERVADA");
 
-        // Carga inicial
         recargarTabla(service, model);
 
+        // ------------------ BOTÓN AGREGAR ------------------
         btnAgregarMesa.addActionListener(e -> {
             String mozo = txtMozo.getText().trim();
             String mesa = txtMesa.getText().trim();
             String estado = (String) comboEstadoMesa.getSelectedItem();
-            String mozoFinal = mozo.isEmpty() ? "—" : mozo;
+            if (mozo.isEmpty()) mozo = "—";
 
-            if (mesa.isEmpty()) {
-                JOptionPane.showMessageDialog(contentPane, "Debe ingresar el nombre de la mesa.");
-                return;
-            }
+            if (!MesaNoDisponibleException.validarNombreMesa(mesa) ||
+                    !MesaNoDisponibleException.validarNombreMozo(mozo)) return;
 
-            service.agregar(mozoFinal, mesa, estado);
+            service.agregar(mozo, mesa, estado);
             recargarTabla(service, model);
 
             txtMesa.setText("");
             txtMozo.setText("");
         });
 
+        // ------------------ BOTÓN ELIMINAR ------------------
         btnEliminarMesa.addActionListener(e -> {
-            Integer id = getIdSeleccionado();
-            if (id == null) {
-                JOptionPane.showMessageDialog(contentPane, "Seleccione una mesa para eliminar.");
-                return;
-            }
+            int row = tablaRestaurante.getSelectedRow();
+            if (!MesaNoDisponibleException.validarFilaSeleccionada(row, "eliminar")) return;
 
-            int confirm = JOptionPane.showConfirmDialog(contentPane,
-                    "¿Está seguro de eliminar la mesa ID " + id + "?",
-                    "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
+            int id = (int) model.getValueAt(row, 0);
+            if (!MesaNoDisponibleException.validarEstadoMesa(
+                    (String) model.getValueAt(row, 3),
+                    null, "eliminar")) return;
 
-            if (confirm == JOptionPane.YES_OPTION) {
-                service.eliminar(id);
-                recargarTabla(service, model);
-            }
+            service.eliminar(id);
+            recargarTabla(service, model);
         });
 
+        // ------------------ BOTÓN CAMBIAR ESTADO ------------------
         btnCambiarEstado.addActionListener(e -> {
-            Integer id = getIdSeleccionado();
-            if (id == null) {
-                JOptionPane.showMessageDialog(contentPane, "Seleccione una mesa para cambiar el estado.");
-                return;
-            }
-
-            String nuevoEstado = (String) comboEstadoMesa.getSelectedItem();
             int row = tablaRestaurante.getSelectedRow();
-            String mozo = (String) tablaRestaurante.getValueAt(row, 1);
+            if (!MesaNoDisponibleException.validarFilaSeleccionada(row, "cambiar estado")) return;
 
-            // Validación: no se puede marcar "OCUPADA" si no tiene mozo
-            if (nuevoEstado.equalsIgnoreCase("OCUPADA") && (mozo.equals("—") || mozo.trim().isEmpty())) {
-                JOptionPane.showMessageDialog(contentPane,
-                        "No se puede marcar la mesa como 'OCUPADA' si no tiene un mozo asignado.",
-                        "Acción no permitida",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+            int id = (int) model.getValueAt(row, 0);
+            String nuevoEstado = (String) comboEstadoMesa.getSelectedItem();
+
+            if (!MesaNoDisponibleException.validarEstadoMesa(
+                    (String) model.getValueAt(row, 3),
+                    nuevoEstado, "cambiar estado")) return;
 
             service.cambiarEstado(id, nuevoEstado);
             recargarTabla(service, model);
         });
 
+        // ------------------ BOTÓN ASIGNAR MOZO ------------------
         btnAsignarMozo.addActionListener(e -> {
-            Integer id = getIdSeleccionado();
-            if (id == null) {
-                JOptionPane.showMessageDialog(contentPane, "Seleccione una mesa para asignar mozo.");
-                return;
-            }
-
-            String mozo = txtMozo.getText().trim();
-            String mozoFinal = mozo.isEmpty() ? "—" : mozo;
             int row = tablaRestaurante.getSelectedRow();
-            String estadoMesa = (String) tablaRestaurante.getValueAt(row, 3);
+            if (!MesaNoDisponibleException.validarFilaSeleccionada(row, "asignar mozo")) return;
 
-            // Validación: solo se puede asignar mozo a mesa LIBRE
-            if (!estadoMesa.equalsIgnoreCase("LIBRE")) {
-                JOptionPane.showMessageDialog(contentPane,
-                        "La mesa no está disponible para asignar mozo.\nEstado actual: " + estadoMesa,
-                        "Mesa no disponible",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+            int id = (int) model.getValueAt(row, 0);
+            String mozo = txtMozo.getText().trim();
+            if (!MesaNoDisponibleException.validarNombreMozo(mozo)) return;
 
-            try {
-                service.asignarMozo(id, mozoFinal);
-                txtMozo.setText("");
-                recargarTabla(service, model);
-                JOptionPane.showMessageDialog(contentPane,
-                        "Mozo asignado correctamente.",
-                        "Éxito",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(contentPane,
-                        "Ocurrió un error: " + ex.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+            if (!MesaNoDisponibleException.validarEstadoMesa(
+                    (String) model.getValueAt(row, 3), null, "asignar mozo")) return;
+
+            service.asignarMozo(id, mozo);
+            recargarTabla(service, model);
+            txtMozo.setText("");
         });
 
-        // Listener para selección de fila
+        // ------------------ SELECCIÓN DE FILA ------------------
         tablaRestaurante.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int row = tablaRestaurante.getSelectedRow();
@@ -163,29 +133,16 @@ public class GestionDeMesa {
 
     private void recargarTabla(MesaService service, DefaultTableModel model) {
         model.setRowCount(0);
-        for (mesa mesa : service.listar()) {
-            Object[] fila = new Object[]{
-                    mesa.getId(),
-                    mesa.getMozo(),
-                    mesa.getNombre(),
-                    mesa.getEstado()
-            };
-            model.addRow(fila);
+        for (mesa m : service.listar()) {
+            model.addRow(new Object[]{
+                    m.getId(),
+                    m.getMozo(),
+                    m.getNombre(),
+                    m.getEstado()
+            });
         }
     }
 
-    private Integer getIdSeleccionado() {
-        int row = tablaRestaurante.getSelectedRow();
-        if (row == -1) return null;
-        Object val = tablaRestaurante.getModel().getValueAt(row, 0);
-        return (Integer) val;
-    }
-
-    public JPanel getContentPane() {
-        return contentPane;
-    }
-
-    public JButton getbtnVolverMenu() {
-        return btnVolverAlMenu;
-    }
+    public JPanel getContentPane() { return contentPane; }
+    public JButton getbtnVolverMenu() { return btnVolverAlMenu; }
 }

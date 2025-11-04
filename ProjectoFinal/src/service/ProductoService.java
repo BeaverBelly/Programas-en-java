@@ -1,11 +1,14 @@
 package service;
 
 import repository.ProductoRepository;
-import Model.Producto;
+import Model.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio que maneja productos del menú (Comida, Bebida, Postre).
+ */
 public class ProductoService {
 
     private final ProductoRepository repo;
@@ -14,21 +17,15 @@ public class ProductoService {
 
     public ProductoService() {
         this.repo = new ProductoRepository();
-        this.productos = repo.cargarProductos(); // Carga los datos existentes
+        this.productos = repo.cargarProductos(); // Carga los productos existentes
 
-        // Calcula el siguiente ID basándose en los datos cargados.
         int maxId = productos.stream()
                 .mapToInt(Producto::getId)
                 .max()
-                .orElse(0); // Si no hay datos, empieza en 0.
+                .orElse(0);
         this.nextId = new AtomicInteger(maxId + 1);
-
     }
 
-    /**
-     * Obtiene todos los productos y los mapea a un formato de fila de JTable.
-     * {"ID","Nombre","Categoría","Precio","Stock","Activo"}
-     */
     public List<Object[]> obtenerProductosParaTabla() {
         return productos.stream()
                 .map(p -> new Object[]{
@@ -46,15 +43,25 @@ public class ProductoService {
         return new ArrayList<>(productos);
     }
 
+    /**
+     * Agrega un producto según su categoría.
+     */
     public void agregar(String nombre, String categoria, double precio, int stock, boolean activo) {
-        Producto nuevo = new Producto(
-                nextId.getAndIncrement(),
-                nombre,
-                categoria,
-                precio,
-                stock,
-                activo
-        );
+        Producto nuevo;
+        switch (categoria.toLowerCase()) {
+            case "comida":
+                nuevo = new Comida(nextId.getAndIncrement(), nombre, precio, stock, activo);
+                break;
+            case "bebida":
+                nuevo = new Bebida(nextId.getAndIncrement(), nombre, precio, stock, activo);
+                break;
+            case "postre":
+                nuevo = new Postre(nextId.getAndIncrement(), nombre, precio, stock, activo);
+                break;
+            default:
+                throw new IllegalArgumentException("Categoría no válida: " + categoria);
+        }
+
         productos.add(nuevo);
         repo.guardarProductos(productos);
     }
@@ -65,13 +72,24 @@ public class ProductoService {
     }
 
     public void modificar(int id, String nombre, String categoria, double precio, int stock, boolean activo) {
-        for (Producto p : productos) {
+        for (int i = 0; i < productos.size(); i++) {
+            Producto p = productos.get(i);
             if (p.getId() == id) {
-                p.setNombre(nombre);
-                p.setCategoria(categoria);
-                p.setPrecio(precio);
-                p.setStock(stock);
-                p.setActivo(activo);
+                Producto modificado;
+                switch (categoria.toLowerCase()) {
+                    case "comida":
+                        modificado = new Comida(id, nombre, precio, stock, activo);
+                        break;
+                    case "bebida":
+                        modificado = new Bebida(id, nombre, precio, stock, activo);
+                        break;
+                    case "postre":
+                        modificado = new Postre(id, nombre, precio, stock, activo);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Categoría no válida: " + categoria);
+                }
+                productos.set(i, modificado);
                 break;
             }
         }

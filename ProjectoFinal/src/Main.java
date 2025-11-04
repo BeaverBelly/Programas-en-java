@@ -13,6 +13,7 @@ public class Main {
             Pedidos_Pagos pedidosPagos = new Pedidos_Pagos(); // Instancia de Pedidos_Pagos
             ReporteBasico reporteBasico = new ReporteBasico();
 
+            // Registrar pantallas en el navegador
             nav.registrar("menu", menu.getContentPane());
 
             nav.registrar("mesa", mesa.getContentPane());
@@ -31,17 +32,19 @@ public class Main {
             menu.getBtnGestiondeMesa().addActionListener(e -> nav.irA("mesa"));
             menu.getBtnCarta().addActionListener(e -> nav.irA("carta"));
 
-            // === MODIFICACIÓN CLAVE AQUÍ ===
-            // 1. Al presionar el botón, se llama a cargarCarta() para actualizar la tabla.
-            // 2. Luego se navega a la ventana.
+            // === PEDIDOS Y PAGOS ===
             menu.getBtnPedidoPago().addActionListener(e -> {
-                pedidosPagos.cargarCarta(); // <--- LLAMADA DE RECARGA
+                pedidosPagos.cargarCarta(); // <--- Recarga productos antes de mostrar
                 nav.irA("pedidosPagos");
             });
-            // ===================================
 
-            menu.getBtnReporteBasico().addActionListener(e -> nav.irA("reporteBasico"));
+            // === REPORTE BÁSICO ===
+            menu.getBtnReporteBasico().addActionListener(e -> {
+                reporteBasico.recargarReporte(); // <--- ACTUALIZA los datos antes de entrar
+                nav.irA("reporteBasico");
+            });
 
+            // Mostrar interfaz inicial
             nav.mostrar();
             nav.irA("menu");
         });

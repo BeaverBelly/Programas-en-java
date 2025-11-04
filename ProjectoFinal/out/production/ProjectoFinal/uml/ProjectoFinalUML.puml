@@ -1,0 +1,221 @@
+@startuml
+title Diagrama general del sistema de gestión de restaurante
+
+package "MODELO (Domain)" {
+
+class EstadoMesa <<enumeration>> {
+  LIBRE
+  OCUPADA
+  RESERVADA
+}
+
+class CategoriaProducto <<enumeration>> {
+  COMIDA
+  BEBIDA
+  POSTRE
+}
+
+class MetodoPago <<enumeration>> {
+  EFECTIVO
+  DEBITO
+  CREDITO
+  TRANSFERENCIA
+}
+
+abstract class Producto {
+    - id : int
+    - nombre : String
+    - precio : double
+    - stock : int
+    - activo : boolean
+}
+
+class Comida
+class Bebida
+class Postre
+
+class Mesa {
+    - id : int
+    - nombre : String
+    - mozo : String
+    - estado : EstadoMesa
+  }
+
+class Pedido {
+    - id : int
+    - fechaHora : String
+    - mesaId : int
+    - items : List<ItemPedido>
+    - total : double
+    - pagado : boolean
+    - metodoPago : MetodoPago
+  }
+
+  class ItemPedido {
+    - productoId : int
+    - nombreProd : String
+    - cantidad : int
+    - precioUnit : double
+    - subtotal : double
+  }
+
+  class Venta {
+    - id : int
+    - pedidoId : int
+    - fechaHora : String
+    - total : double
+    - metodoPago : MetodoPago
+    - mesaId : int
+  }
+
+  Producto <|-- Comida
+  Producto <|-- Bebida
+  Producto <|-- Postre
+
+  Mesa "1" -- "0..*" Pedido
+  Pedido "1" -- "1..*" ItemPedido
+  Pedido "1" --> "0..1" Venta : genera
+}
+
+package "PERSISTENCIA (Repository)" {
+class "ArchivoRepository<T>" as ArchivoRepository {
+    + guardar(List<T>, archivo : String)
+    + cargar(archivo : String) : List<T>
+  }
+
+class MesaRepository {
+    - base : ArchivoRepository<Object[]>  <<impl actual>>
+    + cargarMesas() : List<Object[]>
+    + guardarMesas(List<Object[]>)
+  }
+
+class ProductoRepository {
+    - base : ArchivoRepository<Producto>
+    + listar() : List<Producto>
+    + guardar(List<Producto>)
+  }
+
+class PedidoRepository {
+    - base : ArchivoRepository<Pedido>
+    + listar() : List<Pedido>
+    + guardar(List<Pedido>)
+  }
+
+class VentaRepository {
+    - base : ArchivoRepository<Venta>
+    + listar() : List<Venta>
+    + guardar(List<Venta>)
+  }
+
+MesaRepository --> ArchivoRepository : usa
+ProductoRepository --> ArchivoRepository : usa
+PedidoRepository --> ArchivoRepository : usa
+VentaRepository  --> ArchivoRepository : usa
+}
+
+package "SERVICIOS (Service)" {
+class MesaService {
+    - repo : MesaRepository
+    + listar() : List<Object[]>        <<impl actual>>
+    + agregar(mozo:String, mesa:String, estado:String)
+    + eliminar(id:int)
+    + cambiarEstado(id:int, estado:String)
+    + asignarMozo(id:int, mozo:String)
+  }
+
+class ProductoService {
+    - repo : ProductoRepository
+    + listar() : List<Producto>
+    + crear(...)
+    + actualizar(...)
+    + eliminar(id:int)
+  }
+
+class PedidoService {
+    - repoPed : PedidoRepository
+    - repoProd: ProductoRepository
+    + listarProductos() : List<Producto>
+    + agregarItem(pedidoId:int, prodId:int, cant:int)
+    + quitarItem(pedidoId:int, prodId:int)
+    + calcularTotales(pedidoId:int) : double
+    + confirmarPago(pedidoId:int, metodo:MetodoPago) : Venta
+  }
+
+class ReporteService {
+    - repoVenta : VentaRepository
+    + ventasDelDia() : List<Venta>
+    + totalDelDia() : double
+  }
+
+MesaService --> MesaRepository
+ProductoService --> ProductoRepository
+PedidoService --> PedidoRepository
+PedidoService --> ProductoRepository
+ReporteService --> VentaRepository
+}
+
+package "INTERFAZ (UI)" {
+class Menu_Principal {
+    + getContentPane() : JPanel
+    + getBtnGestiondeMesa() : JButton
+    + getBtnCarta() : JButton
+    + getBtnPedidoPago() : JButton
+    + getBtnReporteBasico() : JButton
+  }
+
+class GestionDeMesa {
+    + getContentPane() : JPanel
+    + getBtnVolverMenu() : JButton
+    + cargarTabla() : void
+    + setMesaService(MesaService)
+  }
+
+class Carta {
+    + getContentPane() : JPanel
+    + setTableData(List<Object[]>)
+    + getIdSeleccionado() : Integer
+    + setProductoService(ProductoService)
+  }
+
+class Pedidos_Pagos {
+    + getContentPane() : JPanel
+    + setMesas(List<String>)
+    + setProductosData(List<Object[]>)
+    + setItemsData(List<Object[]>)
+    + setTotales(sub:double, tot:double)
+  }
+
+class ReporteBasico {
+    + getContentPane() : JPanel
+    + setVentasData(List<Object[]>)
+    + setTotalDia(double)
+}
+
+Menu_Principal --> GestionDeMesa : navega a
+Menu_Principal --> Carta : navega a
+Menu_Principal --> Pedidos_Pagos : navega a
+Menu_Principal --> ReporteBasico : navega a
+
+GestionDeMesa --> MesaService : usa
+Carta --> ProductoService : usa
+Pedidos_Pagos --> PedidoService : usa
+ReporteBasico --> ReporteService : usa
+}
+
+package "UTIL" {
+class Navegador {
+    + registrar(nombre:String, vista:JPanel)
+    + irA(nombre:String)
+    + mostrar()
+}
+class Main
+  Main --> Navegador
+  Navegador --> Menu_Principal
+}
+
+note right of MesaRepository
+Actualmente usa List<Object[]> para compatibilidad
+con la UI. A futuro puede migrarse a List<Mesa>.
+end note
+
+@enduml

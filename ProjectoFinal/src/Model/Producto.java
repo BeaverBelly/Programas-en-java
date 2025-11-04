@@ -3,9 +3,9 @@ package Model;
 import java.io.Serializable;
 
 /**
- * Modelo de datos para representar un Producto de la Carta (Comida, Bebida, Postre).
+ * Clase abstracta que representa un Producto de la Carta (Comida, Bebida, Postre).
  */
-public class Producto implements Serializable {
+public abstract class Producto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -33,10 +33,13 @@ public class Producto implements Serializable {
     public int getStock() { return stock; }
     public boolean isActivo() { return activo; }
 
-    // --- Setters (Para Modificar) ---
+    // --- Setters ---
     public void setNombre(String nombre) { this.nombre = nombre; }
     public void setCategoria(String categoria) { this.categoria = categoria; }
     public void setPrecio(double precio) { this.precio = precio; }
     public void setStock(int stock) { this.stock = stock; }
     public void setActivo(boolean activo) { this.activo = activo; }
+
+    // --- Método abstracto que obligará a las subclases a definir su tipo ---
+    public abstract String obtenerTipo();
 }
