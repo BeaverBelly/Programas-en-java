@@ -12,7 +12,6 @@ import Model.mesa;
  */
 public class GestionDeMesa {
 
-    // ------------------ COMPONENTES DEL FORM ------------------
     private JPanel contentPane;         // Panel raíz del form
     private JTable tablaRestaurante;    // Tabla de mesas
     private JComboBox<String> comboEstadoMesa; // Combo de estados
@@ -24,7 +23,6 @@ public class GestionDeMesa {
     private JTextField txtMesa;
     private JTextField txtMozo;
 
-    // JLabel predefinidos en el .form (mantener nombres exactos)
     private JLabel lblMesa;
     private JLabel lblMozo;
     private JLabel lblEstadoMesa;
@@ -35,7 +33,6 @@ public class GestionDeMesa {
     }
 
     private void setupUI() {
-        // SOLO inicializar los componentes que no están en el .form
         MesaService service = new MesaService();
 
         DefaultTableModel model = new DefaultTableModel(
@@ -55,7 +52,6 @@ public class GestionDeMesa {
 
         recargarTabla(service, model);
 
-        // ------------------ BOTÓN AGREGAR ------------------
         btnAgregarMesa.addActionListener(e -> {
             String mozo = txtMozo.getText().trim();
             String mesa = txtMesa.getText().trim();
@@ -72,7 +68,6 @@ public class GestionDeMesa {
             txtMozo.setText("");
         });
 
-        // ------------------ BOTÓN ELIMINAR ------------------
         btnEliminarMesa.addActionListener(e -> {
             int row = tablaRestaurante.getSelectedRow();
             if (!MesaNoDisponibleException.validarFilaSeleccionada(row, "eliminar")) return;
@@ -86,7 +81,6 @@ public class GestionDeMesa {
             recargarTabla(service, model);
         });
 
-        // ------------------ BOTÓN CAMBIAR ESTADO ------------------
         btnCambiarEstado.addActionListener(e -> {
             int row = tablaRestaurante.getSelectedRow();
             if (!MesaNoDisponibleException.validarFilaSeleccionada(row, "cambiar estado")) return;
@@ -102,8 +96,7 @@ public class GestionDeMesa {
             recargarTabla(service, model);
         });
 
-        // ------------------ BOTÓN ASIGNAR MOZO ------------------
-        btnAsignarMozo.addActionListener(e -> {
+      btnAsignarMozo.addActionListener(e -> {
             int row = tablaRestaurante.getSelectedRow();
             if (!MesaNoDisponibleException.validarFilaSeleccionada(row, "asignar mozo")) return;
 
@@ -119,7 +112,6 @@ public class GestionDeMesa {
             txtMozo.setText("");
         });
 
-        // ------------------ SELECCIÓN DE FILA ------------------
         tablaRestaurante.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int row = tablaRestaurante.getSelectedRow();
