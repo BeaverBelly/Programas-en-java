@@ -39,9 +39,11 @@ public class Pedidos_Pagos {
     // --- NUEVO: temporizador para actualizar mesas ---
     private Timer timerActualizarMesas;
 
+    // --- NUEVO: mantener referencia al servicio de productos ---
+    private final ProductoService productoService = new ProductoService();
+
     public Pedidos_Pagos() {
 
-        // Inicialización de componentes si es null
         if (tblProductos == null) tblProductos = new JTable();
         if (tblPedido == null) tblPedido = new JTable();
         if (spCantidad == null) spCantidad = new JSpinner(new SpinnerNumberModel(1, 1, 1000, 1));
@@ -50,13 +52,11 @@ public class Pedidos_Pagos {
         if (lblTotal == null) lblTotal = new JLabel("Total: $0.00");
         if (txtBuscar == null) txtBuscar = new JTextField();
 
-        // Configuración de tabla Productos
+        // Configuración tabla Productos
         DefaultTableModel modelProd = new DefaultTableModel(
                 new Object[]{"ID", "Nombre", "Categoría", "Precio", "Stock", "Activo"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) { return false; }
-            @Override
-            public Class<?> getColumnClass(int col) {
+            @Override public boolean isCellEditable(int row, int col) { return false; }
+            @Override public Class<?> getColumnClass(int col) {
                 switch (col) {
                     case 0: case 4: return Integer.class;
                     case 3: return Double.class;
@@ -68,13 +68,11 @@ public class Pedidos_Pagos {
         tblProductos.setModel(modelProd);
         tblProductos.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Configuración de tabla Pedido
+        // Configuración tabla Pedido
         DefaultTableModel modelPedido = new DefaultTableModel(
                 new Object[]{"ProdID", "Nombre", "Cant.", "Precio", "Subtotal"}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int col) { return false; }
-            @Override
-            public Class<?> getColumnClass(int col) {
+            @Override public boolean isCellEditable(int row, int col) { return false; }
+            @Override public Class<?> getColumnClass(int col) {
                 switch (col) {
                     case 0: case 2: return Integer.class;
                     case 3: case 4: return Double.class;
@@ -85,22 +83,21 @@ public class Pedidos_Pagos {
         tblPedido.setModel(modelPedido);
         tblPedido.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // ComboBox de métodos de pago
+        // Métodos de pago
         cboMetPago.removeAllItems();
         cboMetPago.addItem("Efectivo");
         cboMetPago.addItem("Débito");
         cboMetPago.addItem("Crédito");
         cboMetPago.addItem("Transferencia");
 
-        // Cargar datos iniciales
         cargarDatosIniciales();
 
-        // Acción de Agregar Item
+        // --- MODIFICADO: Agregar Item con reducción de stock ---
         btnAgregarItem.addActionListener(e -> {
             int fila = tblProductos.getSelectedRow();
             int cantidad = getCantidad();
 
-            if (fila == -1) { showError("Seleccione un producto de la carta."); return; }
+            if (fila == -1) { showError("Seleccione un producto."); return; }
 
             try {
                 DefaultTableModel prodModel = (DefaultTableModel) tblProductos.getModel();
@@ -112,9 +109,16 @@ public class Pedidos_Pagos {
                 ProductoValidator.validarCantidad(cantidad);
                 ProductoValidator.validarStock(stock, cantidad, nombre);
 
+                // 🔹 Reducir stock en el archivo productos.dat
+                productoService.reducirStock(prodId, cantidad);
+
+                // Agregar al pedido
                 double subtotal = precio * cantidad;
                 modelPedido.addRow(new Object[]{prodId, nombre, cantidad, precio, subtotal});
+
+                // Actualizar interfaz
                 recalcularTotalesUI();
+                cargarCarta(); // Refrescar tabla de productos
                 spCantidad.setValue(1);
                 tblProductos.clearSelection();
 
@@ -126,7 +130,7 @@ public class Pedidos_Pagos {
             }
         });
 
-        // Acción de Quitar Item
+        // Quitar ítem
         btnQuitarItem.addActionListener(e -> {
             int fila = tblPedido.getSelectedRow();
             if (fila == -1) { showError("Seleccione un ítem del pedido."); return; }
@@ -136,7 +140,7 @@ public class Pedidos_Pagos {
             }
         });
 
-        // Acción de Confirmar Pedido
+        // Confirmar pedido
         btnConfirmar.addActionListener(e -> {
             if (modelPedido.getRowCount() == 0) { showError("No hay ítems en el pedido."); return; }
 
@@ -161,7 +165,7 @@ public class Pedidos_Pagos {
                 showInfo("Pedido confirmado!");
                 modelPedido.setRowCount(0);
                 recalcularTotalesUI();
-                tblProductos.clearSelection();
+                cargarCarta();
                 spCantidad.setValue(1);
             } catch (Exception ex) {
                 showError("Error al guardar pedido: " + ex.getMessage());
@@ -169,11 +173,10 @@ public class Pedidos_Pagos {
             }
         });
 
-        // --- NUEVO: actualizar mesas en tiempo real ---
         iniciarActualizacionAutomaticaMesas();
     }
 
-    //Cargar mesas y carta
+    // --- resto igual que antes (cargarDatosIniciales, cargarCarta, etc.) ---
     public void cargarDatosIniciales() {
         try {
             MesaService mesaService = new MesaService();
@@ -181,55 +184,45 @@ public class Pedidos_Pagos {
             List<String> mesas = mesaService.obtenerNombresDeMesas();
             if (mesas != null) for (String m : mesas) cboMesa.addItem(m);
             if (!mesas.isEmpty()) cboMesa.setSelectedIndex(0);
-
             cargarCarta();
         } catch (Exception e) {
             showError("Error al cargar datos iniciales: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     public void cargarCarta() {
         try {
-            ProductoService ps = new ProductoService();
-            List<Object[]> filas = ps.obtenerProductosParaTabla();
+            List<Object[]> filas = productoService.obtenerProductosParaTabla();
             DefaultTableModel model = (DefaultTableModel) tblProductos.getModel();
             model.setRowCount(0);
             if (filas != null) for (Object[] f : filas) model.addRow(f);
         } catch (Exception e) {
             showError("Error al cargar carta: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    // --- NUEVO METODO ---
     private void iniciarActualizacionAutomaticaMesas() {
         if (timerActualizarMesas != null) timerActualizarMesas.cancel();
         timerActualizarMesas = new Timer(true);
-
         timerActualizarMesas.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
+            @Override public void run() {
                 SwingUtilities.invokeLater(() -> actualizarListaDeMesas());
             }
-        }, 0, 5000); // cada 5 segundos
+        }, 0, 5000);
     }
 
     private void actualizarListaDeMesas() {
         try {
             MesaService mesaService = new MesaService();
             List<String> mesasActuales = mesaService.obtenerNombresDeMesas();
-
             DefaultComboBoxModel<String> modelo = new DefaultComboBoxModel<>();
             for (String m : mesasActuales) modelo.addElement(m);
             cboMesa.setModel(modelo);
-
         } catch (Exception e) {
             System.err.println("⚠ No se pudo actualizar mesas: " + e.getMessage());
         }
     }
 
-    // --- Métodos auxiliares ---
     private void recalcularTotalesUI() {
         DefaultTableModel model = (DefaultTableModel) tblPedido.getModel();
         double total = 0;
@@ -249,7 +242,6 @@ public class Pedidos_Pagos {
         return total;
     }
 
-    // --- Métodos de utilidad ---
     public int getCantidad() {
         Object val = spCantidad.getValue();
         return (val instanceof Integer) ? (Integer) val : Integer.parseInt(val.toString());
@@ -267,7 +259,6 @@ public class Pedidos_Pagos {
         return JOptionPane.showConfirmDialog(contentPane, msg, "Confirmar", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 
-    // --- GETTERS ---
     public JPanel getContentPane() { return contentPane; }
     public JComboBox<String> getCboMesa() { return cboMesa; }
     public JButton getBtnVolver() { return btnVolver; }

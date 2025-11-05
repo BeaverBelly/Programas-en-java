@@ -1,0 +1,59 @@
+@startuml
+title Modelo de dominio - Sistema de Gestión de Restaurante
+
+'========================
+' CLASE ABSTRACTA PRODUCTO
+'========================
+abstract class Producto {
+    - int id
+    - String nombre
+    - String categoria
+    - double precio
+    - int stock
+    - boolean activo
+    + String obtenerTipo()
+}
+
+class Comida {
+    + String obtenerTipo()
+}
+
+class Bebida {
+    + String obtenerTipo()
+}
+
+class Postre {
+    + String obtenerTipo()
+}
+
+Producto <|-- Comida
+Producto <|-- Bebida
+Producto <|-- Postre
+
+'========================
+' CLASE MESA
+'========================
+class mesa {
+    - int id
+    - String nombre
+    - String mozo
+    - String estado
+}
+
+'========================
+' CLASE PEDIDO
+'========================
+class Pedido {
+    - int id
+    - LocalDateTime fechaHora
+    - double total
+    - String metodoPago
+    - List<Producto> productos
+    - mesa mesaAsignada
+}
+
+mesa "1" --> "0..*" Pedido : tiene >
+Pedido "1" --> "1" mesa : pertenece a >
+Pedido "1" --> "0..*" Producto : contiene >
+
+@enduml

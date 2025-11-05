@@ -15,7 +15,6 @@ public class ProductoService implements IProductoService {
     private final List<Producto> productos;
     private final AtomicInteger nextId;
 
-
     public ProductoService() {
         this.repo = new ProductoRepository();
         this.productos = repo.cargarProductos(); // Carga los productos existentes
@@ -46,9 +45,6 @@ public class ProductoService implements IProductoService {
         return new ArrayList<>(productos);
     }
 
-    /**
-     * Agrega un producto según su categoría.
-     */
     @Override
     public void agregar(String nombre, String categoria, double precio, int stock, boolean activo) {
         Producto nuevo;
@@ -100,5 +96,22 @@ public class ProductoService implements IProductoService {
             }
         }
         repo.guardarProductos(productos);
+    }
+
+    /**
+     * Resta stock al producto seleccionado y guarda la lista en el archivo .dat
+     */
+    public void reducirStock(int idProducto, int cantidad) throws Exception {
+        for (Producto p : productos) {
+            if (p.getId() == idProducto) {
+                if (p.getStock() < cantidad) {
+                    throw new Exception("Stock insuficiente para " + p.getNombre());
+                }
+                p.setStock(p.getStock() - cantidad);
+                repo.guardarProductos(productos); // Guardamos cambios
+                return;
+            }
+        }
+        throw new Exception("Producto con ID " + idProducto + " no encontrado.");
     }
 }

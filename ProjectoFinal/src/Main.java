@@ -31,7 +31,11 @@ public class Main {
 
             // --- LISTENERS DEL MENÚ PRINCIPAL ---
             menu.getBtnGestiondeMesa().addActionListener(e -> nav.irA("mesa"));
-            menu.getBtnCarta().addActionListener(e -> nav.irA("carta"));
+
+            menu.getBtnCarta().addActionListener(e -> {
+                carta.actualizarDesdeArchivo();
+                nav.irA("carta");
+            });
 
             // === PEDIDOS Y PAGOS ===
             menu.getBtnPedidoPago().addActionListener(e -> {

@@ -80,7 +80,7 @@ public class Carta {
 
         // Cargar datos iniciales
         recargarTabla();
-
+        actualizarDesdeArchivo();
 
         tableProducto.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -92,7 +92,12 @@ public class Carta {
         });
 
         // Botón Limpiar
-        btnLimpiar.addActionListener(e -> clearForm());
+        btnLimpiar.addActionListener(e -> {
+            clearForm();
+            txtBuscador.setText(""); // Limpia el buscador
+            recargarTabla();         // Vuelve a mostrar todos los productos
+        });
+
 
         // Botón Agregar
         btnAgregar.addActionListener(e -> {
@@ -175,6 +180,15 @@ public class Carta {
                 tableModel.addRow(fila);
             }
         }
+    }
+    /**
+     * Recarga los productos desde el archivo .dat y actualiza la tabla.
+     * Se usa cada vez que se entra de nuevo a la pantalla.
+     */
+    public void actualizarDesdeArchivo() {
+        // Vuelve a crear el servicio para forzar lectura desde el archivo
+        this.service = new service.ProductoService();
+        recargarTabla(); // Usa el método existente
     }
 
     private void recargarTabla() {
