@@ -7,6 +7,8 @@ import service.ProductoService;
 import repository.PedidoRepository;
 import model.Pedido;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 // 🔹 Imports añadidos para la validación y excepción reales
 import exceptions.ProductoValidator;
@@ -34,12 +36,15 @@ public class Pedidos_Pagos {
     private JLabel lblCatProd;
     private JLabel lblItemPedido;
 
+    // --- NUEVO: temporizador para actualizar mesas ---
+    private Timer timerActualizarMesas;
+
     public Pedidos_Pagos() {
 
         // Inicialización de componentes si es null
         if (tblProductos == null) tblProductos = new JTable();
         if (tblPedido == null) tblPedido = new JTable();
-        if (spCantidad == null) spCantidad = new JSpinner(new SpinnerNumberModel(1,1,1000,1));
+        if (spCantidad == null) spCantidad = new JSpinner(new SpinnerNumberModel(1, 1, 1000, 1));
         if (cboMetPago == null) cboMetPago = new JComboBox<>();
         if (lblsubTotal == null) lblsubTotal = new JLabel("SubTotal: $0.00");
         if (lblTotal == null) lblTotal = new JLabel("Total: $0.00");
@@ -52,7 +57,7 @@ public class Pedidos_Pagos {
             public boolean isCellEditable(int row, int col) { return false; }
             @Override
             public Class<?> getColumnClass(int col) {
-                switch(col) {
+                switch (col) {
                     case 0: case 4: return Integer.class;
                     case 3: return Double.class;
                     case 5: return Boolean.class;
@@ -65,12 +70,12 @@ public class Pedidos_Pagos {
 
         // Configuración de tabla Pedido
         DefaultTableModel modelPedido = new DefaultTableModel(
-                new Object[]{"ProdID","Nombre","Cant.","Precio","Subtotal"},0) {
+                new Object[]{"ProdID", "Nombre", "Cant.", "Precio", "Subtotal"}, 0) {
             @Override
-            public boolean isCellEditable(int row, int col){ return false; }
+            public boolean isCellEditable(int row, int col) { return false; }
             @Override
-            public Class<?> getColumnClass(int col){
-                switch(col){
+            public Class<?> getColumnClass(int col) {
+                switch (col) {
                     case 0: case 2: return Integer.class;
                     case 3: case 4: return Double.class;
                     default: return String.class;
@@ -99,23 +104,16 @@ public class Pedidos_Pagos {
 
             try {
                 DefaultTableModel prodModel = (DefaultTableModel) tblProductos.getModel();
-                int prodId = (Integer) prodModel.getValueAt(fila,0);
-                String nombre = prodModel.getValueAt(fila,1).toString();
-                double precio = (Double) prodModel.getValueAt(fila,3);
-                int stock = (Integer) prodModel.getValueAt(fila,4);
+                int prodId = (Integer) prodModel.getValueAt(fila, 0);
+                String nombre = prodModel.getValueAt(fila, 1).toString();
+                double precio = (Double) prodModel.getValueAt(fila, 3);
+                int stock = (Integer) prodModel.getValueAt(fila, 4);
 
-                // ✅ Validaciones centralizadas
                 ProductoValidator.validarCantidad(cantidad);
-                if (cantidad == 0) {
-                    throw new StockInsuficienteException(
-                            "La cantidad debe ser mayor a cero.",
-                            StockInsuficienteException.Codigo.STOCK_INSUFICIENTE
-                    );
-                }
                 ProductoValidator.validarStock(stock, cantidad, nombre);
 
                 double subtotal = precio * cantidad;
-                modelPedido.addRow(new Object[]{prodId,nombre,cantidad,precio,subtotal});
+                modelPedido.addRow(new Object[]{prodId, nombre, cantidad, precio, subtotal});
                 recalcularTotalesUI();
                 spCantidad.setValue(1);
                 tblProductos.clearSelection();
@@ -142,19 +140,19 @@ public class Pedidos_Pagos {
         btnConfirmar.addActionListener(e -> {
             if (modelPedido.getRowCount() == 0) { showError("No hay ítems en el pedido."); return; }
 
-            String mesa = (String)cboMesa.getSelectedItem();
-            String metodoPago = (String)cboMetPago.getSelectedItem();
+            String mesa = (String) cboMesa.getSelectedItem();
+            String metodoPago = (String) cboMetPago.getSelectedItem();
             double total = obtenerTotalTabla();
 
             if (!confirm(String.format("Confirmar pago de $%.2f para mesa %s con método %s?", total, mesa, metodoPago)))
                 return;
 
-            Pedido pedido = new Pedido(mesa,total,metodoPago);
-            for (int i=0;i<modelPedido.getRowCount();i++){
-                String nombre = modelPedido.getValueAt(i,1).toString();
-                int cant = (Integer)modelPedido.getValueAt(i,2);
-                double subtotal = (Double)modelPedido.getValueAt(i,4);
-                pedido.addItem(nombre,cant,subtotal);
+            Pedido pedido = new Pedido(mesa, total, metodoPago);
+            for (int i = 0; i < modelPedido.getRowCount(); i++) {
+                String nombre = modelPedido.getValueAt(i, 1).toString();
+                int cant = (Integer) modelPedido.getValueAt(i, 2);
+                double subtotal = (Double) modelPedido.getValueAt(i, 4);
+                pedido.addItem(nombre, cant, subtotal);
             }
 
             try {
@@ -165,84 +163,112 @@ public class Pedidos_Pagos {
                 recalcularTotalesUI();
                 tblProductos.clearSelection();
                 spCantidad.setValue(1);
-            } catch (Exception ex){
+            } catch (Exception ex) {
                 showError("Error al guardar pedido: " + ex.getMessage());
                 ex.printStackTrace();
             }
         });
+
+        // --- NUEVO: actualizar mesas en tiempo real ---
+        iniciarActualizacionAutomaticaMesas();
     }
 
-    public void cargarDatosIniciales(){
+    // 🔹 Cargar mesas y carta
+    public void cargarDatosIniciales() {
         try {
             MesaService mesaService = new MesaService();
             cboMesa.removeAllItems();
             List<String> mesas = mesaService.obtenerNombresDeMesas();
-            if (mesas != null) for(String m: mesas) cboMesa.addItem(m);
+            if (mesas != null) for (String m : mesas) cboMesa.addItem(m);
             if (!mesas.isEmpty()) cboMesa.setSelectedIndex(0);
 
             cargarCarta();
-        } catch (Exception e){
+        } catch (Exception e) {
             showError("Error al cargar datos iniciales: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    public void cargarCarta(){
+    public void cargarCarta() {
         try {
             ProductoService ps = new ProductoService();
             List<Object[]> filas = ps.obtenerProductosParaTabla();
             DefaultTableModel model = (DefaultTableModel) tblProductos.getModel();
             model.setRowCount(0);
-            if (filas != null) for(Object[] f: filas) model.addRow(f);
-        } catch (Exception e){
+            if (filas != null) for (Object[] f : filas) model.addRow(f);
+        } catch (Exception e) {
             showError("Error al cargar carta: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private void recalcularTotalesUI(){
+    // --- NUEVO METODO ---
+    private void iniciarActualizacionAutomaticaMesas() {
+        if (timerActualizarMesas != null) timerActualizarMesas.cancel();
+        timerActualizarMesas = new Timer(true);
+
+        timerActualizarMesas.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                SwingUtilities.invokeLater(() -> actualizarListaDeMesas());
+            }
+        }, 0, 5000); // cada 5 segundos
+    }
+
+    private void actualizarListaDeMesas() {
+        try {
+            MesaService mesaService = new MesaService();
+            List<String> mesasActuales = mesaService.obtenerNombresDeMesas();
+
+            DefaultComboBoxModel<String> modelo = new DefaultComboBoxModel<>();
+            for (String m : mesasActuales) modelo.addElement(m);
+            cboMesa.setModel(modelo);
+
+        } catch (Exception e) {
+            System.err.println("⚠ No se pudo actualizar mesas: " + e.getMessage());
+        }
+    }
+
+    // --- Métodos auxiliares ---
+    private void recalcularTotalesUI() {
         DefaultTableModel model = (DefaultTableModel) tblPedido.getModel();
         double total = 0;
-        for (int i=0;i<model.getRowCount();i++){
-            total += (Double)model.getValueAt(i,4);
+        for (int i = 0; i < model.getRowCount(); i++) {
+            total += (Double) model.getValueAt(i, 4);
         }
         lblsubTotal.setText(String.format("SubTotal: $ %.2f", total));
         lblTotal.setText(String.format("Total: $ %.2f", total));
     }
 
-    private double obtenerTotalTabla(){
+    private double obtenerTotalTabla() {
         DefaultTableModel model = (DefaultTableModel) tblPedido.getModel();
         double total = 0;
-        for (int i=0;i<model.getRowCount();i++){
-            total += (Double)model.getValueAt(i,4);
+        for (int i = 0; i < model.getRowCount(); i++) {
+            total += (Double) model.getValueAt(i, 4);
         }
         return total;
     }
 
     // --- Métodos de utilidad ---
-    public int getCantidad(){
+    public int getCantidad() {
         Object val = spCantidad.getValue();
-        return (val instanceof Integer)? (Integer) val : Integer.parseInt(val.toString());
+        return (val instanceof Integer) ? (Integer) val : Integer.parseInt(val.toString());
     }
 
-    public void showInfo(String msg){ JOptionPane.showMessageDialog(contentPane,msg,"Info",JOptionPane.INFORMATION_MESSAGE);}
-    public void showError(String msg){ JOptionPane.showMessageDialog(contentPane,msg,"Error",JOptionPane.ERROR_MESSAGE);}
-    public boolean confirm(String msg){ return JOptionPane.showConfirmDialog(contentPane,msg,"Confirmar",JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION;}
+    public void showInfo(String msg) {
+        JOptionPane.showMessageDialog(contentPane, msg, "Info", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void showError(String msg) {
+        JOptionPane.showMessageDialog(contentPane, msg, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public boolean confirm(String msg) {
+        return JOptionPane.showConfirmDialog(contentPane, msg, "Confirmar", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+    }
 
     // --- GETTERS ---
-    public JPanel getContentPane(){ return contentPane; }
-    public JComboBox<String> getCboMesa(){ return cboMesa; }
-    public JTextField getTxtBuscar(){ return txtBuscar; }
-    public JButton getBtnBuscar(){ return btnBuscar; }
-    public JButton getBtnLimpiar(){ return btnLimpiar; }
-    public JButton getBtnConfirmar(){ return btnConfirmar; }
-    public JButton getBtnVolver(){ return btnVolver; }
-    public JComboBox<String> getCboMetPago(){ return cboMetPago; }
-    public JLabel getLblsubTotal(){ return lblsubTotal; }
-    public JLabel getLblTotal(){ return lblTotal; }
-    public JSpinner getSpCantidad(){ return spCantidad; }
-    public JButton getBtnAgregarItem(){ return btnAgregarItem; }
-    public JButton getBtnQuitarItem(){ return btnQuitarItem; }
-    public JTable getTblProductos(){ return tblProductos; }
-    public JTable getTblPedido(){ return tblPedido; }
+    public JPanel getContentPane() { return contentPane; }
+    public JComboBox<String> getCboMesa() { return cboMesa; }
+    public JButton getBtnVolver() { return btnVolver; }
 }

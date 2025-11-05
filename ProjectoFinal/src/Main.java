@@ -39,6 +39,12 @@ public class Main {
                 nav.irA("pedidosPagos");
             });
 
+            menu.getBtnPedidoPago().addActionListener(e -> {
+                pedidosPagos.cargarCarta(); // 🔄 AHORA carga mesas actualizadas en tiempo real
+                pedidosPagos.cargarCarta();   // recarga productos también
+                nav.irA("pedidosPagos");
+            });
+
             // === REPORTE BÁSICO ===
             menu.getBtnReporteBasico().addActionListener(e -> {
                 reporteBasico.recargarReporte(); // <--- ACTUALIZA los datos antes de entrar
