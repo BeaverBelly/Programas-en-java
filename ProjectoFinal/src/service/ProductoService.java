@@ -9,11 +9,12 @@ import java.util.stream.Collectors;
 /**
  * Servicio que maneja productos del menú (Comida, Bebida, Postre).
  */
-public class ProductoService {
+public class ProductoService implements IProductoService {
 
     private final ProductoRepository repo;
     private final List<Producto> productos;
     private final AtomicInteger nextId;
+
 
     public ProductoService() {
         this.repo = new ProductoRepository();
@@ -26,6 +27,7 @@ public class ProductoService {
         this.nextId = new AtomicInteger(maxId + 1);
     }
 
+    @Override
     public List<Object[]> obtenerProductosParaTabla() {
         return productos.stream()
                 .map(p -> new Object[]{
@@ -39,6 +41,7 @@ public class ProductoService {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public List<Producto> listar() {
         return new ArrayList<>(productos);
     }
@@ -46,6 +49,7 @@ public class ProductoService {
     /**
      * Agrega un producto según su categoría.
      */
+    @Override
     public void agregar(String nombre, String categoria, double precio, int stock, boolean activo) {
         Producto nuevo;
         switch (categoria.toLowerCase()) {
@@ -66,11 +70,13 @@ public class ProductoService {
         repo.guardarProductos(productos);
     }
 
+    @Override
     public void eliminar(int id) {
         productos.removeIf(p -> p.getId() == id);
         repo.guardarProductos(productos);
     }
 
+    @Override
     public void modificar(int id, String nombre, String categoria, double precio, int stock, boolean activo) {
         for (int i = 0; i < productos.size(); i++) {
             Producto p = productos.get(i);

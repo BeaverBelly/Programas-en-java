@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-// 🔹 Imports añadidos para la validación y excepción reales
+//Imports añadidos para la validación y excepción reales
 import exceptions.ProductoValidator;
 import exceptions.StockInsuficienteException;
 
@@ -173,7 +173,7 @@ public class Pedidos_Pagos {
         iniciarActualizacionAutomaticaMesas();
     }
 
-    // 🔹 Cargar mesas y carta
+    //Cargar mesas y carta
     public void cargarDatosIniciales() {
         try {
             MesaService mesaService = new MesaService();

@@ -26,7 +26,7 @@ public class ReporteService {
 
         for (Pedido p : pedidos) {
             try {
-                // Fila: {"VentaID", "Mesa", "Fecha/Hora", "Total", "Método de Pago"}
+                // Fila: {"VentaID", "Mesa", "Fecha/Hora", "Total", "Metodo de Pago"}
                 filas.add(new Object[]{
                         ventaID++,
                         p.getNombreMesa(),

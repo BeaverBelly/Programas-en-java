@@ -40,7 +40,7 @@ public class Main {
             });
 
             menu.getBtnPedidoPago().addActionListener(e -> {
-                pedidosPagos.cargarCarta(); // 🔄 AHORA carga mesas actualizadas en tiempo real
+                pedidosPagos.cargarCarta(); // AHORA carga mesas actualizadas en tiempo real
                 pedidosPagos.cargarCarta();   // recarga productos también
                 nav.irA("pedidosPagos");
             });

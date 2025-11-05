@@ -1,7 +1,6 @@
 package repository;
 
 import model.mesa;
-import java.nio.file.Paths;
 import java.util.List;
 
 public class MesaRepository extends ArchivoRepository<mesa> {
@@ -9,8 +8,8 @@ public class MesaRepository extends ArchivoRepository<mesa> {
     private static final String ARCHIVO = "mesas.dat";
 
     public MesaRepository() {
-
-        super(Paths.get(System.getProperty("user.dir"), "data", "mesas"));
+        // Usa el constructor que ya definiste en ArchivoRepository
+        super("mesas");
     }
 
     public void guardarMesas(List<mesa> mesas) {
@@ -20,5 +19,4 @@ public class MesaRepository extends ArchivoRepository<mesa> {
     public List<mesa> cargarMesas() {
         return cargar(ARCHIVO);
     }
-
 }

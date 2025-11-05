@@ -33,7 +33,7 @@ public class PedidoRepository extends ArchivoRepository<Pedido> {
      * Carga la lista completa de pedidos desde el archivo único.
      */
     public List<Pedido> cargarTodosLosPedidos() {
-        // Usa el método 'cargar' de la clase base, que devuelve una lista vacía si falla.
+        // Usa el metodo 'cargar' de la clase base, que devuelve una lista vacía si falla.
         System.out.println("DEBUG: Cargando pedidos desde el archivo único: " + ARCHIVO_PEDIDOS);
         List<Pedido> pedidosCargados = cargar(ARCHIVO_PEDIDOS);
         System.out.println("DEBUG: Total de pedidos cargados: " + pedidosCargados.size());

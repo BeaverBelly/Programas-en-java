@@ -40,6 +40,6 @@ public abstract class Producto implements Serializable {
     public void setStock(int stock) { this.stock = stock; }
     public void setActivo(boolean activo) { this.activo = activo; }
 
-    // --- Método abstracto que obligará a las subclases a definir su tipo ---
+    // --- Metodo abstracto que obligará a las subclases a definir su tipo ---
     public abstract String obtenerTipo();
 }

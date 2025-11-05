@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * Repositorio genérico para persistencia binaria de listas de objetos {@link Serializable}.
- * Permite configurar la carpeta base ya sea en ~/.resto/<carpetaDatos> (constructor clásico)
+ * Permite configurar la carpeta base ya sea en ./data/<carpetaDatos> (modo proyecto)
  * o en un directorio arbitrario del proyecto (constructor con {@link Path}).
  *
  * @param <T> Tipo serializable a persistir (Mesa, Producto, etc.).
@@ -17,12 +17,12 @@ public class ArchivoRepository<T extends Serializable> {
     /** Carpeta base donde se guardan los .dat */
     private final Path baseDir;
 
-    /** Modo clásico: ~/.resto/<carpetaDatos> */
+    /** Crea la carpeta dentro del proyecto (./data/<carpetaDatos>) */
     public ArchivoRepository(String carpetaDatos) {
-        this(Paths.get(System.getProperty("user.home"), ".resto", carpetaDatos));
+        this(Paths.get(System.getProperty("user.dir"), "data", carpetaDatos));
     }
 
-    /** NUEVO: permitir carpeta base arbitraria (por ej. ./data/mesas) */
+    /** Permitir carpeta base arbitraria (por ej. ./data/mesas) */
     public ArchivoRepository(Path baseDir) {
         this.baseDir = baseDir;
         try {
