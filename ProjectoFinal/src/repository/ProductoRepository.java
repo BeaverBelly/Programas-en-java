@@ -1,6 +1,6 @@
 package repository;
 
-import Model.Producto;
+import model.Producto;
 import java.nio.file.Paths;
 import java.util.List;
 

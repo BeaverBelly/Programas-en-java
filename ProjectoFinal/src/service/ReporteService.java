@@ -1,6 +1,6 @@
 package service;
 
-import Model.Pedido;
+import model.Pedido;
 import repository.PedidoRepository;
 import java.util.ArrayList;
 import java.util.List;

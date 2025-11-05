@@ -1,4 +1,4 @@
-package Model;
+package model;
 
 /**
  * Subclase que representa un Postre en el menú.

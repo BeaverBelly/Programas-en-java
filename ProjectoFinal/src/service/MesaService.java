@@ -1,7 +1,7 @@
 package service;
 
 import repository.MesaRepository;
-import Model.mesa;
+import model.mesa;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 

@@ -5,8 +5,12 @@ import javax.swing.table.DefaultTableModel;
 import service.MesaService;
 import service.ProductoService;
 import repository.PedidoRepository;
-import Model.Pedido;
+import model.Pedido;
 import java.util.List;
+
+// 🔹 Imports añadidos para la validación y excepción reales
+import exceptions.ProductoValidator;
+import exceptions.StockInsuficienteException;
 
 public class Pedidos_Pagos {
 
@@ -29,13 +33,6 @@ public class Pedidos_Pagos {
     private JLabel lblCantidad;
     private JLabel lblCatProd;
     private JLabel lblItemPedido;
-
-    // Excepción personalizada para control de stock
-    public static class StockInsuficienteException extends Exception {
-        public StockInsuficienteException(String mensaje) {
-            super(mensaje);
-        }
-    }
 
     public Pedidos_Pagos() {
 
@@ -99,7 +96,6 @@ public class Pedidos_Pagos {
             int cantidad = getCantidad();
 
             if (fila == -1) { showError("Seleccione un producto de la carta."); return; }
-            if (cantidad <= 0) { showError("Cantidad debe ser mayor a cero."); return; }
 
             try {
                 DefaultTableModel prodModel = (DefaultTableModel) tblProductos.getModel();
@@ -108,8 +104,15 @@ public class Pedidos_Pagos {
                 double precio = (Double) prodModel.getValueAt(fila,3);
                 int stock = (Integer) prodModel.getValueAt(fila,4);
 
-                if (cantidad > stock)
-                    throw new StockInsuficienteException("Stock insuficiente para " + nombre + ". Disponible: " + stock);
+                // ✅ Validaciones centralizadas
+                ProductoValidator.validarCantidad(cantidad);
+                if (cantidad == 0) {
+                    throw new StockInsuficienteException(
+                            "La cantidad debe ser mayor a cero.",
+                            StockInsuficienteException.Codigo.STOCK_INSUFICIENTE
+                    );
+                }
+                ProductoValidator.validarStock(stock, cantidad, nombre);
 
                 double subtotal = precio * cantidad;
                 modelPedido.addRow(new Object[]{prodId,nombre,cantidad,precio,subtotal});
@@ -141,7 +144,7 @@ public class Pedidos_Pagos {
 
             String mesa = (String)cboMesa.getSelectedItem();
             String metodoPago = (String)cboMetPago.getSelectedItem();
-            double total = obtenerTotalTabla(); // <-- cambio aquí, suma directa de la tabla
+            double total = obtenerTotalTabla();
 
             if (!confirm(String.format("Confirmar pago de $%.2f para mesa %s con método %s?", total, mesa, metodoPago)))
                 return;
@@ -211,7 +214,7 @@ public class Pedidos_Pagos {
         DefaultTableModel model = (DefaultTableModel) tblPedido.getModel();
         double total = 0;
         for (int i=0;i<model.getRowCount();i++){
-            total += (Double)model.getValueAt(i,4); // Columna Subtotal
+            total += (Double)model.getValueAt(i,4);
         }
         return total;
     }

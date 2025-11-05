@@ -1,6 +1,6 @@
 package repository;
 
-import Model.Pedido;
+import model.Pedido;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;

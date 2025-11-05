@@ -1,4 +1,4 @@
-package Model;
+package model;
 
 /**
  * Subclase que representa una Bebida en el menú.

@@ -1,7 +1,7 @@
 package service;
 
 import repository.ProductoRepository;
-import Model.*;
+import model.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class ProductoService {
 
     private final ProductoRepository repo;
-    private final List<Producto> productos;
+    private final List<model.Producto> productos;
     private final AtomicInteger nextId;
 
     public ProductoService() {
@@ -20,7 +20,7 @@ public class ProductoService {
         this.productos = repo.cargarProductos(); // Carga los productos existentes
 
         int maxId = productos.stream()
-                .mapToInt(Producto::getId)
+                .mapToInt(model.Producto::getId)
                 .max()
                 .orElse(0);
         this.nextId = new AtomicInteger(maxId + 1);

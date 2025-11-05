@@ -1,6 +1,6 @@
 package repository;
 
-import Model.mesa;
+import model.mesa;
 import java.nio.file.Paths;
 import java.util.List;
 

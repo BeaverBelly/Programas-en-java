@@ -8,7 +8,7 @@ import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
 import java.text.NumberFormat;
 import java.util.List;
-import Model.Producto;
+import model.Producto;
 import service.ProductoService;
 
 /**

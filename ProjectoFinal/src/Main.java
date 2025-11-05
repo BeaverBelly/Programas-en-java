@@ -3,6 +3,7 @@ import javax.swing.*;
 import ui.*;
 import util.Navegador;
 
+
 public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
